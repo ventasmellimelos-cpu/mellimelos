@@ -1,8 +1,6 @@
 import { z } from "zod";
 import { createRouter, publicQuery } from "./middleware";
-import { getDb } from "./queries/connection";
-import { uploads } from "../db/schema";
-import { eq } from "drizzle-orm";
+import { createUpload, getUploadById } from "./json-store";
 
 export const uploadRouter = createRouter({
   create: publicQuery
@@ -14,15 +12,11 @@ export const uploadRouter = createRouter({
       })
     )
     .mutation(async ({ input }) => {
-      const db = getDb();
-      const [upload] = await db
-        .insert(uploads)
-        .values({
-          filename: input.filename,
-          mimeType: input.mimeType,
-          data: input.data,
-        })
-        .returning();
+      const upload = createUpload({
+        filename: input.filename,
+        mimeType: input.mimeType,
+        data: input.data,
+      });
 
       return {
         id: upload.id,
@@ -35,15 +29,8 @@ export const uploadRouter = createRouter({
   getById: publicQuery
     .input(z.object({ id: z.number() }))
     .query(async ({ input }) => {
-      const db = getDb();
-      const [upload] = await db
-        .select()
-        .from(uploads)
-        .where(eq(uploads.id, input.id))
-        .limit(1);
-
+      const upload = getUploadById(input.id);
       if (!upload) throw new Error("Upload not found");
-
       return upload;
     }),
 });

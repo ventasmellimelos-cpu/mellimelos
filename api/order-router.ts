@@ -1,16 +1,33 @@
 import { z } from "zod";
 import { createRouter, publicQuery } from "./middleware";
-import { getDb } from "./queries/connection";
-import { orders } from "@db/schema";
-import { eq, desc } from "drizzle-orm";
+import { getOrders, createOrder, updateOrderStatus } from "./json-store";
 
 export const orderRouter = createRouter({
+  list: publicQuery
+    .input(
+      z.object({
+        status: z.enum(["pending", "confirmed", "shipped", "delivered"]).optional(),
+        page: z.number().min(1).default(1),
+        limit: z.number().min(1).max(50).default(20),
+      }).optional()
+    )
+    .query(async ({ input }) => {
+      let items = getOrders();
+      if (input?.status) {
+        items = items.filter((o) => o.status === input.status);
+      }
+      items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      const total = items.length;
+      const offset = ((input?.page ?? 1) - 1) * (input?.limit ?? 20);
+      return { items: items.slice(offset, offset + (input?.limit ?? 20)), total };
+    }),
+
   create: publicQuery
     .input(
       z.object({
         customerName: z.string().min(1),
         customerPhone: z.string().min(1),
-        customerEmail: z.string().email().optional(),
+        customerEmail: z.string().optional(),
         items: z.array(
           z.object({
             productId: z.number(),
@@ -26,8 +43,7 @@ export const orderRouter = createRouter({
       })
     )
     .mutation(async ({ input }) => {
-      const db = getDb();
-      const result = await db.insert(orders).values({
+      const order = createOrder({
         customerName: input.customerName,
         customerPhone: input.customerPhone,
         customerEmail: input.customerEmail,
@@ -35,34 +51,14 @@ export const orderRouter = createRouter({
         totalAmount: String(input.totalAmount),
         status: "pending",
         notes: input.notes,
-      }).returning({ id: orders.id });
-      return { success: true, orderId: result[0]?.id ?? 0 };
+      });
+      return order;
     }),
-
-  getByPhone: publicQuery
-    .input(z.object({ phone: z.string() }))
-    .query(async ({ input }) => {
-      const db = getDb();
-      return db
-        .select()
-        .from(orders)
-        .where(eq(orders.customerPhone, input.phone))
-        .orderBy(desc(orders.createdAt));
-    }),
-
-  list: publicQuery.query(async () => {
-    const db = getDb();
-    return db.select().from(orders).orderBy(desc(orders.createdAt));
-  }),
 
   updateStatus: publicQuery
-    .input(z.object({
-      id: z.number(),
-      status: z.enum(["pending", "confirmed", "shipped", "delivered"]),
-    }))
+    .input(z.object({ id: z.number(), status: z.enum(["pending", "confirmed", "shipped", "delivered"]) }))
     .mutation(async ({ input }) => {
-      const db = getDb();
-      await db.update(orders).set({ status: input.status }).where(eq(orders.id, input.id));
+      updateOrderStatus(input.id, input.status);
       return { success: true };
     }),
 });

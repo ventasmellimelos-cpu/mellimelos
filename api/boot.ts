@@ -7,11 +7,7 @@ import { readFileSync, existsSync } from "fs";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { appRouter } from "./router";
 import { createContext } from "./context";
-import { getDb } from "./queries/connection";
-import { uploads } from "../db/schema";
-import { eq, sql } from "drizzle-orm";
-import postgres from "postgres";
-import { env } from "./lib/env";
+import { getUploadById } from "./json-store";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -27,24 +23,16 @@ app.get("/api/trpc/ping", (c) => c.json({ ok: true, ts: Date.now() }));
 app.get("/api/ping", (c) => c.json({ ok: true, ts: Date.now() }));
 app.get("/health", (c) => c.json({ ok: true }));
 
-// Serve uploaded images directly from database
+// Serve uploaded images directly from json-store
 app.get("/uploads/:id", async (c) => {
   try {
     const id = parseInt(c.req.param("id"));
     if (isNaN(id)) return c.text("Invalid upload ID", 400);
 
-    const db = getDb();
-    const [upload] = await db
-      .select()
-      .from(uploads)
-      .where(eq(uploads.id, id))
-      .limit(1);
-
+    const upload = getUploadById(id);
     if (!upload) return c.text("Image not found", 404);
 
-    // Decode base64 to binary
     const buffer = Buffer.from(upload.data, "base64");
-
     c.header("Content-Type", upload.mimeType);
     c.header("Cache-Control", "public, max-age=31536000");
     return c.body(buffer);
@@ -63,20 +51,9 @@ app.use("/robots.txt", serveStatic({ root: publicDir }));
 app.use("/sitemap.xml", serveStatic({ root: publicDir }));
 app.use("/sw.js", serveStatic({ root: publicDir }));
 
-// Migration endpoint (call once to sync DB)
+// Migration endpoint - no-op with json-store
 app.get("/api/migrate", async (c) => {
-  try {
-    const client = postgres(env.databaseUrl);
-    await client`ALTER TABLE products ADD COLUMN IF NOT EXISTS images json`;
-    await client`ALTER TABLE products ADD COLUMN IF NOT EXISTS video_url varchar(500)`;
-    await client`ALTER TABLE products ADD COLUMN IF NOT EXISTS colors json`;
-    await client`CREATE TABLE IF NOT EXISTS product_variants (id SERIAL PRIMARY KEY, product_id INTEGER NOT NULL, color VARCHAR(100) NOT NULL, color_hex VARCHAR(20), size VARCHAR(50) NOT NULL, stock INTEGER DEFAULT 0, created_at TIMESTAMP NOT NULL DEFAULT NOW())`;
-    await client`CREATE TABLE IF NOT EXISTS uploads (id SERIAL PRIMARY KEY, filename VARCHAR(255) NOT NULL, mime_type VARCHAR(100) NOT NULL, data TEXT NOT NULL, created_at TIMESTAMP NOT NULL DEFAULT NOW())`;
-    await client.end();
-    return c.json({ ok: true, message: "Migration completed" });
-  } catch (e) {
-    return c.json({ ok: false, error: e instanceof Error ? e.message : String(e) }, 500);
-  }
+  return c.json({ ok: true, message: "Using json-store, no migration needed" });
 });
 
 // tRPC API handler
@@ -102,47 +79,8 @@ app.get("/*", (c) => {
   }
 });
 
-// Auto-migration: ensure schema is up to date
-async function runMigrations() {
-  try {
-    const client = postgres(env.databaseUrl);
-    // Add new columns to products if they don't exist
-    await client`ALTER TABLE products ADD COLUMN IF NOT EXISTS images json`.catch(() => null);
-    await client`ALTER TABLE products ADD COLUMN IF NOT EXISTS video_url varchar(500)`.catch(() => null);
-    await client`ALTER TABLE products ADD COLUMN IF NOT EXISTS colors json`.catch(() => null);
-    // Create product_variants table if it doesn't exist
-    await client`
-      CREATE TABLE IF NOT EXISTS product_variants (
-        id SERIAL PRIMARY KEY,
-        product_id INTEGER NOT NULL,
-        color VARCHAR(100) NOT NULL,
-        color_hex VARCHAR(20),
-        size VARCHAR(50) NOT NULL,
-        stock INTEGER DEFAULT 0,
-        created_at TIMESTAMP NOT NULL DEFAULT NOW()
-      )
-    `.catch(() => null);
-    // Create uploads table if it doesn't exist
-    await client`
-      CREATE TABLE IF NOT EXISTS uploads (
-        id SERIAL PRIMARY KEY,
-        filename VARCHAR(255) NOT NULL,
-        mime_type VARCHAR(100) NOT NULL,
-        data TEXT NOT NULL,
-        created_at TIMESTAMP NOT NULL DEFAULT NOW()
-      )
-    `.catch(() => null);
-    await client.end();
-    console.log("Migrations completed");
-  } catch (e) {
-    console.error("Migration error:", e);
-  }
-}
-
-runMigrations().then(() => {
-  serve({ fetch: app.fetch, port }, () => {
-    console.log(`Melli Melos running on port ${port}, serving from ${publicDir}`);
-  });
+serve({ fetch: app.fetch, port }, () => {
+  console.log(`Melli Melos running on port ${port}, serving from ${publicDir}`);
 });
 
 export default app;

@@ -77,9 +77,18 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   // Sync from server when available
   useEffect(() => {
-    if (serverSettings && Object.keys(serverSettings).length > Object.keys(DEFAULTS).length - 5) {
+    // Convert array to record if needed (json-store returns array)
+    const settingsRecord: Record<string, string> = {};
+    if (Array.isArray(serverSettings)) {
+      for (const s of serverSettings) {
+        if (s && s.key) settingsRecord[s.key] = s.value;
+      }
+    } else if (serverSettings && typeof serverSettings === "object") {
+      Object.assign(settingsRecord, serverSettings as Record<string, string>);
+    }
+    if (Object.keys(settingsRecord).length > 0) {
       setSettingsState((prev) => {
-        const merged = { ...prev, ...serverSettings };
+        const merged = { ...prev, ...settingsRecord };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
         localStorage.setItem(STORAGE_TS_KEY, Date.now().toString());
         return merged;

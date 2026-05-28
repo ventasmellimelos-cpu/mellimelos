@@ -12,7 +12,8 @@ const statusConfig = {
 export default function AdminOrders() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const utils = trpc.useUtils();
-  const { data: orders, isLoading } = trpc.order.list.useQuery();
+  const { data: ordersData, isLoading } = trpc.order.list.useQuery();
+  const orders = ordersData?.items ?? [];
 
   const updateStatus = trpc.order.updateStatus.useMutation({
     onSuccess: () => utils.order.list.invalidate(),
@@ -20,16 +21,16 @@ export default function AdminOrders() {
 
   const filteredOrders = statusFilter === "all"
     ? orders
-    : orders?.filter((o) => o.status === statusFilter);
+    : orders.filter((o: any) => o.status === statusFilter);
 
-  const totalAmount = filteredOrders?.reduce((sum, o) => sum + parseFloat(String(o.totalAmount)), 0) ?? 0;
+  const totalAmount = filteredOrders.reduce((sum: number, o: any) => sum + parseFloat(String(o.totalAmount)), 0);
 
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="font-display text-3xl font-bold text-[#2D2D2D]">Órdenes</h1>
-          <p className="font-body text-[#6B6B6B] mt-1">{orders?.length ?? 0} órdenes | Total: ${totalAmount.toLocaleString("es-AR")}</p>
+          <p className="font-body text-[#6B6B6B] mt-1">{orders.length} órdenes | Total: ${totalAmount.toLocaleString("es-AR")}</p>
         </div>
       </div>
 
