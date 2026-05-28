@@ -15,6 +15,7 @@ export const orderRouter = createRouter({
           z.object({
             productId: z.number(),
             name: z.string(),
+            color: z.string(),
             size: z.string(),
             price: z.number(),
             quantity: z.number().min(1),

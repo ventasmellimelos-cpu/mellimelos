@@ -9,7 +9,7 @@ export default function CartDrawer() {
 
   const generateWhatsAppMessage = () => {
     const lines = items.map(
-      (i) => `• ${i.name} (Talle: ${i.size}) x${i.quantity} — $${(i.price * i.quantity).toLocaleString("es-AR")}`
+      (i) => `• ${i.name} (Color: ${i.color}, Talle: ${i.size}) x${i.quantity} — $${(i.price * i.quantity).toLocaleString("es-AR")}`
     );
     const message = `Hola Melli Melos! Quiero hacer un pedido:\n\n${lines.join("\n")}\n\n*Total: $${totalPrice.toLocaleString("es-AR")}*\n\nAguardo confirmación, gracias!`;
     return encodeURIComponent(message);
@@ -32,7 +32,7 @@ export default function CartDrawer() {
       />
 
       {/* Drawer */}
-      <div className="fixed right-0 top-0 bottom-0 z-[70] w-full max-w-[400px] bg-white shadow-2xl flex flex-col"
+      <div className="fixed right-0 top-0 bottom-0 z-[70] w-full max-w-[420px] bg-white shadow-2xl flex flex-col"
         style={{ borderRadius: "24px 0 0 24px" }}
       >
         {/* Header */}
@@ -69,7 +69,7 @@ export default function CartDrawer() {
             <div className="flex flex-col gap-4">
               {items.map((item) => (
                 <div
-                  key={`${item.productId}-${item.size}`}
+                  key={`${item.productId}-${item.color}-${item.size}`}
                   className="flex gap-4 p-3 rounded-2xl bg-[#F5F0EB]/50"
                 >
                   <img
@@ -82,7 +82,7 @@ export default function CartDrawer() {
                       {item.name}
                     </p>
                     <p className="font-body text-xs text-[#6B6B6B] mt-0.5">
-                      Talle: {item.size}
+                      Color: <span className="font-medium">{item.color}</span> · Talle: <span className="font-medium">{item.size}</span>
                     </p>
                     <p className="font-body font-semibold text-sm text-[#2D2D2D] mt-1">
                       ${item.price.toLocaleString("es-AR")}
@@ -91,7 +91,7 @@ export default function CartDrawer() {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() =>
-                            updateQuantity(item.productId, item.size, item.quantity - 1)
+                            updateQuantity(item.productId, item.color, item.size, item.quantity - 1)
                           }
                           className="w-7 h-7 flex items-center justify-center rounded-full bg-white hover:bg-[#F8E1E4] transition-colors"
                         >
@@ -102,7 +102,7 @@ export default function CartDrawer() {
                         </span>
                         <button
                           onClick={() =>
-                            updateQuantity(item.productId, item.size, item.quantity + 1)
+                            updateQuantity(item.productId, item.color, item.size, item.quantity + 1)
                           }
                           className="w-7 h-7 flex items-center justify-center rounded-full bg-white hover:bg-[#F8E1E4] transition-colors"
                         >
@@ -110,7 +110,7 @@ export default function CartDrawer() {
                         </button>
                       </div>
                       <button
-                        onClick={() => removeItem(item.productId, item.size)}
+                        onClick={() => removeItem(item.productId, item.color, item.size)}
                         className="p-1.5 rounded-full hover:bg-red-50 text-[#6B6B6B] hover:text-red-500 transition-colors"
                         aria-label="Eliminar"
                       >
