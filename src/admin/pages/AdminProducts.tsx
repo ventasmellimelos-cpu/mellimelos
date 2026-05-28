@@ -228,7 +228,7 @@ export default function AdminProducts() {
           onClick={() => { setShowForm(true); setEditingId(null); resetForm(); }}
           className="flex items-center gap-2 bg-[#2D2D2D] text-white font-body font-medium px-5 py-2.5 rounded-xl hover:bg-[#F8E1E4] hover:text-[#2D2D2D] transition-all"
         >
-          <Plus size={18} /> Nuevo producto
+          <Plus size={18} /> Crear producto
         </button>
       </div>
 
