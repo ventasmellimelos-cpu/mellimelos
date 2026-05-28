@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from "react-router";
 import { CartProvider } from "./context/CartContext";
+import { SettingsProvider } from "./context/SettingsContext";
 import { AdminAuthProvider, useAdminAuth } from "./admin/context/AdminAuth";
 import Navbar from "./components/Navbar";
 import CartDrawer from "./components/CartDrawer";
@@ -11,6 +12,7 @@ import AdminLayout from "./admin/components/AdminLayout";
 import AdminDashboard from "./admin/pages/AdminDashboard";
 import AdminProducts from "./admin/pages/AdminProducts";
 import AdminOrders from "./admin/pages/AdminOrders";
+import AdminConfig from "./admin/pages/AdminConfig";
 
 function AdminGuard({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAdminAuth();
@@ -20,22 +22,22 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <AdminAuthProvider>
-      <CartProvider>
-        <Navbar />
-        <CartDrawer />
-        <Routes>
-          {/* Public routes */}
-          <Route path="/" element={<><Home /><Footer /></>} />
-          <Route path="/catalogo" element={<><Catalogo /><Footer /></>} />
-
-          {/* Admin routes */}
-          <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin" element={<AdminGuard><AdminDashboard /></AdminGuard>} />
-          <Route path="/admin/productos" element={<AdminGuard><AdminProducts /></AdminGuard>} />
-          <Route path="/admin/ordenes" element={<AdminGuard><AdminOrders /></AdminGuard>} />
-        </Routes>
-      </CartProvider>
-    </AdminAuthProvider>
+    <SettingsProvider>
+      <AdminAuthProvider>
+        <CartProvider>
+          <Navbar />
+          <CartDrawer />
+          <Routes>
+            <Route path="/" element={<><Home /><Footer /></>} />
+            <Route path="/catalogo" element={<><Catalogo /><Footer /></>} />
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin" element={<AdminGuard><AdminDashboard /></AdminGuard>} />
+            <Route path="/admin/productos" element={<AdminGuard><AdminProducts /></AdminGuard>} />
+            <Route path="/admin/ordenes" element={<AdminGuard><AdminOrders /></AdminGuard>} />
+            <Route path="/admin/configuracion" element={<AdminGuard><AdminConfig /></AdminGuard>} />
+          </Routes>
+        </CartProvider>
+      </AdminAuthProvider>
+    </SettingsProvider>
   );
 }

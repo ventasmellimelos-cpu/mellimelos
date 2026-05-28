@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router";
 import {
-  LayoutDashboard, Package, ShoppingBag, LogOut,
+  LayoutDashboard, Package, ShoppingBag, LogOut, Settings,
   ChevronRight, Heart, ArrowLeft
 } from "lucide-react";
 import { useAdminAuth } from "@/admin/context/AdminAuth";
@@ -8,7 +8,8 @@ import { useAdminAuth } from "@/admin/context/AdminAuth";
 const navItems = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { to: "/admin/productos", label: "Productos", icon: Package },
-  { to: "/admin/ordenes", label: "Órdenes", icon: ShoppingBag },
+  { to: "/admin/ordenes", label: "Ordenes", icon: ShoppingBag },
+  { to: "/admin/configuracion", label: "Configuracion", icon: Settings },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -23,14 +24,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="min-h-screen bg-[#F5F0EB] flex">
-      {/* Sidebar */}
       <aside className="w-64 bg-[#2D2D2D] text-white flex flex-col fixed h-full">
         <div className="p-6 border-b border-white/10">
           <Link to="/" className="flex items-center gap-2 mb-1">
             <Heart size={16} className="text-[#F8E1E4]" fill="#F8E1E4" />
             <span className="font-accent text-xl font-bold text-[#F8E1E4]">Melli Melos</span>
           </Link>
-          <p className="font-body text-xs text-white/40 mt-1">Panel de Administración</p>
+          <p className="font-body text-xs text-white/40 mt-1">Panel de Administracion</p>
         </div>
 
         <nav className="flex-1 p-4 space-y-1">
@@ -68,12 +68,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-body text-sm text-white/60 hover:text-red-400 hover:bg-red-400/10 transition-all"
           >
             <LogOut size={18} />
-            Cerrar sesión
+            Cerrar sesion
           </button>
         </div>
       </aside>
 
-      {/* Main content */}
       <main className="flex-1 ml-64 p-8">
         {children}
       </main>

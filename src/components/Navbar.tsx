@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router";
 import { ShoppingBag, Menu, X, Heart } from "lucide-react";
 import { useCart } from "@/context/CartContext";
+import { useSettings } from "@/context/SettingsContext";
 
 const navLinks = [
   { to: "/", label: "Inicio" },
@@ -12,6 +13,7 @@ const navLinks = [
 
 export default function Navbar() {
   const { totalItems, setIsOpen } = useCart();
+  const { get } = useSettings();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
@@ -34,7 +36,7 @@ export default function Navbar() {
       {/* Top announcement bar */}
       <div className={`fixed top-0 left-0 right-0 z-[60] bg-[#2D2D2D] text-white text-center py-1.5 transition-transform duration-300 ${scrolled ? '-translate-y-full' : 'translate-y-0'}`}>
         <p className="font-body text-xs tracking-wide">
-          🏆 Mercado Líder Platinum | Envíos gratis en compras +$25.000 🚚💕
+          {get("badge_text")}
         </p>
       </div>
 
