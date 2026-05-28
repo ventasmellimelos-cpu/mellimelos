@@ -13,12 +13,12 @@ gsap.registerPlugin(ScrollTrigger);
 
 // Hardcoded featured products for static deployment (no backend needed)
 const featuredProducts = [
-  { id: 1, name: "Body Manga Larga Premium", description: "Body de algodón orgánico", price: "4999.00", salePrice: "3999.00", imageUrl: "/images/products/product-1.jpg", category: "bodies", sizes: ["0-3m","3-6m","6-9m"], isFeatured: true, isNew: true, isBestseller: true, stock: 25 },
-  { id: 2, name: "Buzo Polar con Pie", description: "Buzo polar ultra suave", price: "6999.00", salePrice: "4899.00", imageUrl: "/images/products/product-2.jpg", category: "conjuntos", sizes: ["0-3m","3-6m","6-9m"], isFeatured: true, isNew: false, isBestseller: true, stock: 18 },
-  { id: 3, name: "Conjunto Tejido Sage", description: "Saquito tejido y pantalón", price: "7999.00", salePrice: "5599.00", imageUrl: "/images/products/product-3.jpg", category: "conjuntos", sizes: ["0-3m","3-6m","6-9m"], isFeatured: true, isNew: true, isBestseller: false, stock: 12 },
-  { id: 4, name: "Set Gorro y Manoplas", description: "Set en color peach", price: "3499.00", salePrice: "2799.00", imageUrl: "/images/products/product-4.jpg", category: "accesorios", sizes: ["0-3m","3-6m"], isFeatured: true, isNew: false, isBestseller: true, stock: 30 },
-  { id: 5, name: "Body Nubes Mint", description: "Body con estampado de nubes", price: "4999.00", salePrice: "3999.00", imageUrl: "/images/products/product-5.jpg", category: "bodies", sizes: ["0-3m","3-6m","6-9m"], isFeatured: true, isNew: false, isBestseller: false, stock: 20 },
-  { id: 6, name: "Manta Waffle Premium", description: "Manta textura waffle crema", price: "5499.00", salePrice: "3849.00", imageUrl: "/images/products/product-6.jpg", category: "accesorios", sizes: ["UNICO"], isFeatured: true, isNew: true, isBestseller: false, stock: 15 },
+  { id: 1, name: "Body Manga Larga Premium", description: "Body de algodón orgánico", price: "49990.00", salePrice: "39990.00", imageUrl: "/images/products/product-1.jpg", category: "bodies", sizes: ["0-3m","3-6m","6-9m"], isFeatured: true, isNew: true, isBestseller: true, stock: 25 },
+  { id: 2, name: "Buzo Polar con Pie", description: "Buzo polar ultra suave", price: "69990.00", salePrice: "48990.00", imageUrl: "/images/products/product-2.jpg", category: "conjuntos", sizes: ["0-3m","3-6m","6-9m"], isFeatured: true, isNew: false, isBestseller: true, stock: 18 },
+  { id: 3, name: "Conjunto Tejido Sage", description: "Saquito tejido y pantalón", price: "79990.00", salePrice: "55990.00", imageUrl: "/images/products/product-3.jpg", category: "conjuntos", sizes: ["0-3m","3-6m","6-9m"], isFeatured: true, isNew: true, isBestseller: false, stock: 12 },
+  { id: 4, name: "Set Gorro y Manoplas", description: "Set en color peach", price: "34990.00", salePrice: "27990.00", imageUrl: "/images/products/product-4.jpg", category: "accesorios", sizes: ["0-3m","3-6m"], isFeatured: true, isNew: false, isBestseller: true, stock: 30 },
+  { id: 5, name: "Body Nubes Mint", description: "Body con estampado de nubes", price: "49990.00", salePrice: "39990.00", imageUrl: "/images/products/product-5.jpg", category: "bodies", sizes: ["0-3m","3-6m","6-9m"], isFeatured: true, isNew: false, isBestseller: false, stock: 20 },
+  { id: 6, name: "Manta Waffle Premium", description: "Manta textura waffle crema", price: "54990.00", salePrice: "38490.00", imageUrl: "/images/products/product-6.jpg", category: "accesorios", sizes: ["UNICO"], isFeatured: true, isNew: true, isBestseller: false, stock: 15 },
 ];
 
 const categories = [
