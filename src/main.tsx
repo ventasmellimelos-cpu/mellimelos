@@ -5,6 +5,9 @@ import './index.css'
 import { TRPCProvider } from "@/providers/trpc"
 import App from './App.tsx'
 
+// Build cache buster v2 - force Vite rebuild
+console.log('[Melli Melos] Build v2 - 2026-05-29');
+
 // Register Service Worker for PWA
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
