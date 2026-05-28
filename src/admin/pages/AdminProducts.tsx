@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Plus, Pencil, Trash2, Search, Package, X } from "lucide-react";
+import { useState, useRef } from "react";
+import { Plus, Pencil, Trash2, Search, Package, X, Upload, ImageIcon } from "lucide-react";
 import { trpc } from "@/providers/trpc";
 
 const categories = ["bodies", "conjuntos", "accesorios", "regalo"] as const;
@@ -9,6 +9,11 @@ export default function AdminProducts() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Image upload state
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const utils = trpc.useUtils();
   const { data, isLoading } = trpc.product.list.useQuery({ search: search || undefined, limit: 100 });
@@ -23,17 +28,31 @@ export default function AdminProducts() {
     onSuccess: () => { utils.product.list.invalidate(); setDeleteId(null); },
   });
 
+  const uploadMutation = trpc.upload.create.useMutation({
+    onSuccess: (data) => {
+      setForm((prev) => ({ ...prev, imageUrl: data.url }));
+      setUploadingImage(false);
+    },
+    onError: () => {
+      setUploadingImage(false);
+      alert("Error al subir la imagen. Intenta de nuevo.");
+    },
+  });
+
   const [form, setForm] = useState({
     name: "", description: "", price: "", salePrice: "",
     imageUrl: "", category: "bodies" as typeof categories[number],
     sizes: "", isFeatured: false, isNew: false, isBestseller: false, stock: "",
   });
 
-  const resetForm = () => setForm({
-    name: "", description: "", price: "", salePrice: "",
-    imageUrl: "", category: "bodies", sizes: "",
-    isFeatured: false, isNew: false, isBestseller: false, stock: "",
-  });
+  const resetForm = () => {
+    setForm({
+      name: "", description: "", price: "", salePrice: "",
+      imageUrl: "", category: "bodies", sizes: "",
+      isFeatured: false, isNew: false, isBestseller: false, stock: "",
+    });
+    setPreviewUrl(null);
+  };
 
   const openEdit = (product: any) => {
     setEditingId(product.id);
@@ -47,7 +66,45 @@ export default function AdminProducts() {
       isBestseller: product.isBestseller ?? false,
       stock: String(product.stock ?? 0),
     });
+    setPreviewUrl(product.imageUrl ?? null);
     setShowForm(true);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const validTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (!validTypes.includes(file.type)) {
+      alert("Solo se permiten archivos PNG, JPG o WEBP.");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert("La imagen no debe superar los 5MB.");
+      return;
+    }
+
+    // Show preview
+    const objectUrl = URL.createObjectURL(file);
+    setPreviewUrl(objectUrl);
+    setUploadingImage(true);
+
+    // Read as base64 and upload
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64 = reader.result as string;
+      // Remove data:image/xxx;base64, prefix
+      const base64Data = base64.split(",")[1];
+      uploadMutation.mutate({
+        filename: file.name,
+        mimeType: file.type,
+        data: base64Data,
+      });
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -67,6 +124,8 @@ export default function AdminProducts() {
       createMutation.mutate(data);
     }
   };
+
+  const isSubmitting = createMutation.isPending || updateMutation.isPending || uploadingImage;
 
   return (
     <div>
@@ -196,12 +255,67 @@ export default function AdminProducts() {
                   <input type="number" value={form.salePrice} onChange={(e) => setForm({ ...form, salePrice: e.target.value })}
                     className="w-full px-4 py-2.5 rounded-xl border border-[#E0D5CC] font-body text-sm focus:outline-none focus:ring-2 focus:ring-[#F8E1E4]" />
                 </div>
+
+                {/* IMAGE UPLOAD */}
                 <div className="sm:col-span-2">
-                  <label className="font-body text-sm font-medium text-[#2D2D2D] mb-1 block">URL de imagen</label>
-                  <input value={form.imageUrl} onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
-                    placeholder="/images/products/product-1.jpg"
-                    className="w-full px-4 py-2.5 rounded-xl border border-[#E0D5CC] font-body text-sm focus:outline-none focus:ring-2 focus:ring-[#F8E1E4]" />
+                  <label className="font-body text-sm font-medium text-[#2D2D2D] mb-1 block">Imagen del producto</label>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+
+                  {/* Preview or Upload Button */}
+                  {previewUrl || form.imageUrl ? (
+                    <div className="relative w-full h-48 rounded-xl border border-[#E0D5CC] overflow-hidden bg-[#F5F0EB]">
+                      <img
+                        src={previewUrl || form.imageUrl}
+                        alt="Preview"
+                        className="w-full h-full object-contain"
+                      />
+                      <div className="absolute inset-0 bg-black/30 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="flex items-center gap-2 bg-white text-[#2D2D2D] font-body text-sm px-4 py-2 rounded-xl hover:bg-[#F8E1E4] transition-all"
+                        >
+                          <Upload size={16} /> Cambiar imagen
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setPreviewUrl(null); setForm((p) => ({ ...p, imageUrl: "" })); }}
+                          className="flex items-center gap-2 bg-red-500 text-white font-body text-sm px-4 py-2 rounded-xl hover:bg-red-600 transition-all"
+                        >
+                          <X size={16} /> Eliminar
+                        </button>
+                      </div>
+                      {uploadingImage && (
+                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                          <div className="flex items-center gap-2 text-white font-body text-sm">
+                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            Subiendo...
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-full h-32 rounded-xl border-2 border-dashed border-[#E0D5CC] bg-[#F5F0EB] flex flex-col items-center justify-center gap-2 hover:border-[#D4A5A5] hover:bg-[#F8E1E4]/30 transition-all cursor-pointer"
+                    >
+                      <ImageIcon size={32} className="text-[#D4A5A5]" />
+                      <span className="font-body text-sm text-[#6B6B6B]">Hace clic para subir una imagen (PNG, JPG, WEBP)</span>
+                      <span className="font-body text-xs text-[#B0A8A0]">Max. 5MB</span>
+                    </button>
+                  )}
+
+                  {/* Hidden field stores the URL */}
+                  <input type="hidden" value={form.imageUrl} />
                 </div>
+
                 <div>
                   <label className="font-body text-sm font-medium text-[#2D2D2D] mb-1 block">Categoría</label>
                   <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value as typeof categories[number] })}
@@ -240,7 +354,7 @@ export default function AdminProducts() {
                   className="flex-1 px-4 py-3 rounded-xl border border-[#E0D5CC] font-body font-medium text-sm hover:bg-[#F5F0EB] transition-all">
                   Cancelar
                 </button>
-                <button type="submit" disabled={createMutation.isPending || updateMutation.isPending}
+                <button type="submit" disabled={isSubmitting}
                   className="flex-1 bg-[#2D2D2D] text-white px-4 py-3 rounded-xl font-body font-medium text-sm hover:bg-[#F8E1E4] hover:text-[#2D2D2D] transition-all disabled:opacity-50">
                   {editingId ? "Guardar cambios" : "Crear producto"}
                 </button>

@@ -49,3 +49,11 @@ export const settings = pgTable("settings", {
   value: text("value").notNull(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
+
+export const uploads = pgTable("uploads", {
+  id: serial("id").primaryKey(),
+  filename: varchar("filename", { length: 255 }).notNull(),
+  mimeType: varchar("mime_type", { length: 100 }).notNull(),
+  data: text("data").notNull(), // base64 encoded image data
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});

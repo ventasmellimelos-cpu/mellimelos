@@ -4,6 +4,9 @@ import { serveStatic } from "@hono/node-server/serve-static";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import { readFileSync, existsSync } from "fs";
+import { getDb } from "./queries/connection";
+import { uploads } from "../db/schema";
+import { eq } from "drizzle-orm";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -17,6 +20,33 @@ const port = parseInt(process.env.PORT || "3000");
 app.get("/api/trpc/ping", (c) => c.json({ ok: true, ts: Date.now() }));
 app.get("/api/ping", (c) => c.json({ ok: true, ts: Date.now() }));
 app.get("/health", (c) => c.json({ ok: true }));
+
+// Serve uploaded images directly from database
+app.get("/uploads/:id", async (c) => {
+  try {
+    const id = parseInt(c.req.param("id"));
+    if (isNaN(id)) return c.text("Invalid upload ID", 400);
+
+    const db = getDb();
+    const [upload] = await db
+      .select()
+      .from(uploads)
+      .where(eq(uploads.id, id))
+      .limit(1);
+
+    if (!upload) return c.text("Image not found", 404);
+
+    // Decode base64 to binary
+    const buffer = Buffer.from(upload.data, "base64");
+
+    c.header("Content-Type", upload.mimeType);
+    c.header("Cache-Control", "public, max-age=31536000");
+    return c.body(buffer);
+  } catch (e) {
+    console.error("Error serving upload:", e);
+    return c.text(`Error: ${e instanceof Error ? e.message : "unknown"}`, 500);
+  }
+});
 
 // Serve static files (JS, CSS, images, etc.)
 app.use("/assets/*", serveStatic({ root: publicDir }));
