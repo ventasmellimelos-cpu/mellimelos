@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useLocation } from "react-router";
+import { Routes, Route, Navigate } from "react-router";
 import { CartProvider } from "./context/CartContext";
 import { SettingsProvider } from "./context/SettingsContext";
 import { AdminAuthProvider, useAdminAuth } from "./admin/context/AdminAuth";

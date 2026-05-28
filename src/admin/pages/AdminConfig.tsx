@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Settings, Save, RotateCcw, Globe, Phone, Mail, MapPin, FileText, Tag, Truck, Sparkles } from "lucide-react";
+import { Settings, Save, Globe, Phone, FileText, Truck, Sparkles } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 
 type TabId = "general" | "contact" | "hero" | "trust" | "content" | "seo";
