@@ -10,14 +10,11 @@ app.get("/api/trpc/ping", (c) => c.json({ ok: true, ts: Date.now() }));
 app.get("/api/ping", (c) => c.json({ ok: true, ts: Date.now() }));
 app.get("/health", (c) => c.json({ ok: true }));
 
-// Serve static files (frontend)
-app.use("/*", serveStatic({ root: "./public" }));
+// Serve static files from dist/public (where Vite builds to)
+app.use("/*", serveStatic({ root: "./dist/public" }));
 
 // Fallback to index.html for SPA routing
-app.get("/*", serveStatic({ path: "./public/index.html" }));
+app.get("/*", serveStatic({ path: "./dist/public/index.html" }));
 
 serve({ fetch: app.fetch, port }, () => {
-  console.log(`Melli Melos running on port ${port}`);
-});
-
-export default app;
+  console.log(`Melli Melos running on po// Melli Melos - Thu May 28 22:22:25 CST 2026
