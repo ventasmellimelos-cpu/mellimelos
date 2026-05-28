@@ -4,7 +4,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
   Heart, Truck, Search, MessageCircle, Check, Baby, Leaf, Package,
-  Star, ArrowRight, Shield, Clock, Gift
+  Star, ArrowRight, Shield, Clock, Gift, ShoppingBag, Mail
 } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 import { useSettings } from "@/context/SettingsContext";
