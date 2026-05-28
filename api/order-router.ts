@@ -48,4 +48,20 @@ export const orderRouter = createRouter({
         .where(eq(orders.customerPhone, input.phone))
         .orderBy(desc(orders.createdAt));
     }),
+
+  list: publicQuery.query(async () => {
+    const db = getDb();
+    return db.select().from(orders).orderBy(desc(orders.createdAt));
+  }),
+
+  updateStatus: publicQuery
+    .input(z.object({
+      id: z.number(),
+      status: z.enum(["pending", "confirmed", "shipped", "delivered"]),
+    }))
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      await db.update(orders).set({ status: input.status }).where(eq(orders.id, input.id));
+      return { success: true };
+    }),
 });

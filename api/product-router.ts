@@ -87,4 +87,78 @@ export const productRouter = createRouter({
       .where(eq(products.isFeatured, true))
       .limit(6);
   }),
+
+  create: publicQuery
+    .input(z.object({
+      name: z.string().min(1),
+      description: z.string().optional(),
+      price: z.number().positive(),
+      salePrice: z.number().positive().optional(),
+      imageUrl: z.string().optional(),
+      category: z.enum(["bodies", "conjuntos", "accesorios", "regalo"]),
+      sizes: z.array(z.string()).optional(),
+      isFeatured: z.boolean().optional(),
+      isNew: z.boolean().optional(),
+      isBestseller: z.boolean().optional(),
+      stock: z.number().int().min(0).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      const result = await db.insert(products).values({
+        name: input.name,
+        description: input.description,
+        price: String(input.price),
+        salePrice: input.salePrice ? String(input.salePrice) : null,
+        imageUrl: input.imageUrl,
+        category: input.category,
+        sizes: input.sizes ?? ["0-3m", "3-6m", "6-9m"],
+        isFeatured: input.isFeatured ?? false,
+        isNew: input.isNew ?? false,
+        isBestseller: input.isBestseller ?? false,
+        stock: input.stock ?? 0,
+      }).returning({ id: products.id });
+      return { success: true, id: result[0]?.id };
+    }),
+
+  update: publicQuery
+    .input(z.object({
+      id: z.number(),
+      name: z.string().min(1),
+      description: z.string().optional(),
+      price: z.number().positive(),
+      salePrice: z.number().positive().optional(),
+      imageUrl: z.string().optional(),
+      category: z.enum(["bodies", "conjuntos", "accesorios", "regalo"]),
+      sizes: z.array(z.string()).optional(),
+      isFeatured: z.boolean().optional(),
+      isNew: z.boolean().optional(),
+      isBestseller: z.boolean().optional(),
+      stock: z.number().int().min(0).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      const { id, ...data } = input;
+      await db.update(products).set({
+        name: data.name,
+        description: data.description,
+        price: String(data.price),
+        salePrice: data.salePrice ? String(data.salePrice) : null,
+        imageUrl: data.imageUrl,
+        category: data.category,
+        sizes: data.sizes ?? ["0-3m", "3-6m", "6-9m"],
+        isFeatured: data.isFeatured ?? false,
+        isNew: data.isNew ?? false,
+        isBestseller: data.isBestseller ?? false,
+        stock: data.stock ?? 0,
+      }).where(eq(products.id, id));
+      return { success: true };
+    }),
+
+  delete: publicQuery
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      await db.delete(products).where(eq(products.id, input.id));
+      return { success: true };
+    }),
 });
