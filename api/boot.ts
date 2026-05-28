@@ -1,48 +1,23 @@
 import { Hono } from "hono";
-import { bodyLimit } from "hono/body-limit";
-import type { HttpBindings } from "@hono/node-server";
-import { env } from "./lib/env";
+import { serve } from "@hono/node-server";
+import { serveStatic } from "@hono/node-server/serve-static";
 
-const app = new Hono<{ Bindings: HttpBindings }>();
+const app = new Hono();
+const port = parseInt(process.env.PORT || "3000");
 
-app.use(bodyLimit({ maxSize: 50 * 1024 * 1024 }));
-
-// Health check - always responds, even without database
+// Health check - Railway needs this
 app.get("/api/trpc/ping", (c) => c.json({ ok: true, ts: Date.now() }));
 app.get("/api/ping", (c) => c.json({ ok: true, ts: Date.now() }));
+app.get("/health", (c) => c.json({ ok: true }));
 
-// Only load backend if DATABASE_URL is available
-if (env.databaseUrl && env.databaseUrl !== "placeholder") {
-  try {
-    const { fetchRequestHandler } = await import("@trpc/server/adapters/fetch");
-    const { appRouter } = await import("./router");
-    const { createContext } = await import("./context");
+// Serve static files (frontend)
+app.use("/*", serveStatic({ root: "./public" }));
 
-    app.use("/api/trpc/*", async (c) => {
-      return fetchRequestHandler({
-        endpoint: "/api/trpc",
-        req: c.req.raw,
-        router: appRouter,
-        createContext,
-      });
-    });
-    console.log("Backend loaded with database support");
-  } catch (e) {
-    console.warn("Backend failed to load, serving static only:", e);
-  }
-}
+// Fallback to index.html for SPA routing
+app.get("/*", serveStatic({ path: "./public/index.html" }));
 
-app.all("/api/*", (c) => c.json({ error: "Not Found" }, 404));
+serve({ fetch: app.fetch, port }, () => {
+  console.log(`Melli Melos running on port ${port}`);
+});
 
 export default app;
-
-if (env.isProduction) {
-  const { serve } = await import("@hono/node-server");
-  const { serveStaticFiles } = await import("./lib/vite");
-  serveStaticFiles(app);
-
-  const port = parseInt(process.env.PORT || "3000");
-  serve({ fetch: app.fetch, port }, () => {
-    console.log(`Server running on http://localhost:${port}/`);
-  });
-}
