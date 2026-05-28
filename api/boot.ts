@@ -9,7 +9,9 @@ import { appRouter } from "./router";
 import { createContext } from "./context";
 import { getDb } from "./queries/connection";
 import { uploads } from "../db/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
+import postgres from "postgres";
+import { env } from "./lib/env";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -83,8 +85,47 @@ app.get("/*", (c) => {
   }
 });
 
-serve({ fetch: app.fetch, port }, () => {
-  console.log(`Melli Melos running on port ${port}, serving from ${publicDir}`);
+// Auto-migration: ensure schema is up to date
+async function runMigrations() {
+  try {
+    const client = postgres(env.databaseUrl);
+    // Add new columns to products if they don't exist
+    await client`ALTER TABLE products ADD COLUMN IF NOT EXISTS images json`.catch(() => null);
+    await client`ALTER TABLE products ADD COLUMN IF NOT EXISTS video_url varchar(500)`.catch(() => null);
+    await client`ALTER TABLE products ADD COLUMN IF NOT EXISTS colors json`.catch(() => null);
+    // Create product_variants table if it doesn't exist
+    await client`
+      CREATE TABLE IF NOT EXISTS product_variants (
+        id SERIAL PRIMARY KEY,
+        product_id INTEGER NOT NULL,
+        color VARCHAR(100) NOT NULL,
+        color_hex VARCHAR(20),
+        size VARCHAR(50) NOT NULL,
+        stock INTEGER DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `.catch(() => null);
+    // Create uploads table if it doesn't exist
+    await client`
+      CREATE TABLE IF NOT EXISTS uploads (
+        id SERIAL PRIMARY KEY,
+        filename VARCHAR(255) NOT NULL,
+        mime_type VARCHAR(100) NOT NULL,
+        data TEXT NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `.catch(() => null);
+    await client.end();
+    console.log("Migrations completed");
+  } catch (e) {
+    console.error("Migration error:", e);
+  }
+}
+
+runMigrations().then(() => {
+  serve({ fetch: app.fetch, port }, () => {
+    console.log(`Melli Melos running on port ${port}, serving from ${publicDir}`);
+  });
 });
 
 export default app;
