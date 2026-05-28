@@ -7,10 +7,19 @@ import {
   Check, Baby, Leaf, Package, Star, ArrowRight, Shield,
   Clock, Gift
 } from "lucide-react";
-import { trpc } from "@/providers/trpc";
 import ProductCard from "@/components/ProductCard";
 
 gsap.registerPlugin(ScrollTrigger);
+
+// Hardcoded featured products for static deployment (no backend needed)
+const featuredProducts = [
+  { id: 1, name: "Body Manga Larga Premium", description: "Body de algodón orgánico", price: "4999.00", salePrice: "3999.00", imageUrl: "/images/products/product-1.jpg", category: "bodies", sizes: ["0-3m","3-6m","6-9m"], isFeatured: true, isNew: true, isBestseller: true, stock: 25 },
+  { id: 2, name: "Buzo Polar con Pie", description: "Buzo polar ultra suave", price: "6999.00", salePrice: "4899.00", imageUrl: "/images/products/product-2.jpg", category: "conjuntos", sizes: ["0-3m","3-6m","6-9m"], isFeatured: true, isNew: false, isBestseller: true, stock: 18 },
+  { id: 3, name: "Conjunto Tejido Sage", description: "Saquito tejido y pantalón", price: "7999.00", salePrice: "5599.00", imageUrl: "/images/products/product-3.jpg", category: "conjuntos", sizes: ["0-3m","3-6m","6-9m"], isFeatured: true, isNew: true, isBestseller: false, stock: 12 },
+  { id: 4, name: "Set Gorro y Manoplas", description: "Set en color peach", price: "3499.00", salePrice: "2799.00", imageUrl: "/images/products/product-4.jpg", category: "accesorios", sizes: ["0-3m","3-6m"], isFeatured: true, isNew: false, isBestseller: true, stock: 30 },
+  { id: 5, name: "Body Nubes Mint", description: "Body con estampado de nubes", price: "4999.00", salePrice: "3999.00", imageUrl: "/images/products/product-5.jpg", category: "bodies", sizes: ["0-3m","3-6m","6-9m"], isFeatured: true, isNew: false, isBestseller: false, stock: 20 },
+  { id: 6, name: "Manta Waffle Premium", description: "Manta textura waffle crema", price: "5499.00", salePrice: "3849.00", imageUrl: "/images/products/product-6.jpg", category: "accesorios", sizes: ["UNICO"], isFeatured: true, isNew: true, isBestseller: false, stock: 15 },
+];
 
 const categories = [
   { name: "Bodies", slug: "bodies", image: "/images/categories/bodies.jpg", color: "#C5D5C0", count: "8 productos" },
@@ -47,7 +56,6 @@ const testimonials = [
 export default function Home() {
   const heroRef = useRef<HTMLDivElement>(null);
   const [activeCategory, setActiveCategory] = useState<number | null>(null);
-  const { data: featuredProducts } = trpc.product.featured.useQuery();
 
   // Hero entrance
   useEffect(() => {
@@ -112,7 +120,7 @@ export default function Home() {
 
             <p className="hero-subtitle font-body text-lg text-[#6B6B6B] leading-relaxed mb-8 max-w-[480px]">
               Cada prenda está pensada con amor. Desde recién nacidos hasta 24 meses, 
-              en el Partido de 6 de Septiembre, Buenos Aires. Envíos a todo el país.
+              en Carlos Spegazzini, Partido de Ezeiza, Buenos Aires. Envíos a todo el país.
             </p>
 
             <div className="hero-cta flex flex-col sm:flex-row items-start gap-4 mb-10">
@@ -271,7 +279,7 @@ export default function Home() {
                 Somos una tienda familiar dedicada a la ropa de bebé. Cada prenda que elegimos está pensada para el confort y la delicadeza que los más chiquitos merecen.
               </p>
               <p className="font-body text-[#6B6B6B] leading-relaxed mb-8">
-                Trabajamos con materiales suaves, diseños prácticos y mucho amor. Estamos en Constancio Vigil 150, Partido de 6 de Septiembre, Buenos Aires. Hacemos envíos a todo el país. ¡Somos Mercado Líder Platinum y también vendemos en Max Gise!
+                Trabajamos con materiales suaves, diseños prácticos y mucho amor. Estamos en Constancio Vigil 150, Carlos Spegazzini, Partido de Ezeiza, Buenos Aires. Hacemos envíos a todo el país. ¡Somos Mercado Líder Platinum y también vendemos en Max Gise!
               </p>
               <div className="space-y-3 mb-8">
                 {features.map((f) => (

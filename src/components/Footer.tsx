@@ -45,7 +45,7 @@ export default function Footer() {
               <span className="font-accent text-2xl font-bold text-[#F8E1E4]">Melli Melos</span>
             </Link>
             <p className="font-body text-sm text-white/50 leading-relaxed">
-              Ropa de bebé con amor desde el Partido de 6 de Septiembre, Buenos Aires. Cada prenda está pensada para el confort de los más pequeños.
+              Ropa de bebé con amor desde Carlos Spegazzini, Partido de Ezeiza, Buenos Aires. Cada prenda está pensada para el confort de los más pequeños.
             </p>
           </div>
 
@@ -83,7 +83,7 @@ export default function Footer() {
             <div className="flex items-start gap-2.5 mb-4">
               <MapPin size={15} className="text-white/40 mt-0.5 flex-shrink-0" />
               <p className="font-body text-sm text-white/50 leading-relaxed">
-                Constancio Vigil 150<br />Partido de 6 de Septiembre, Buenos Aires<br />Argentina
+                Constancio Vigil 150<br />Carlos Spegazzini, Partido de Ezeiza<br />Buenos Aires, Argentina
               </p>
             </div>
             <div className="flex items-center gap-2.5">
