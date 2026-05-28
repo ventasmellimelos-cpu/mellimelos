@@ -4,6 +4,9 @@ import { serveStatic } from "@hono/node-server/serve-static";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import { readFileSync, existsSync } from "fs";
+import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
+import { appRouter } from "./router";
+import { createContext } from "./context";
 import { getDb } from "./queries/connection";
 import { uploads } from "../db/schema";
 import { eq } from "drizzle-orm";
@@ -56,6 +59,16 @@ app.use("/manifest.json", serveStatic({ root: publicDir }));
 app.use("/robots.txt", serveStatic({ root: publicDir }));
 app.use("/sitemap.xml", serveStatic({ root: publicDir }));
 app.use("/sw.js", serveStatic({ root: publicDir }));
+
+// tRPC API handler
+app.all("/api/trpc/*", async (c) => {
+  return fetchRequestHandler({
+    endpoint: "/api/trpc",
+    req: c.req.raw,
+    router: appRouter,
+    createContext,
+  });
+});
 
 // SPA fallback: serve index.html for ALL other routes
 app.get("/*", (c) => {
