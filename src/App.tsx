@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router";
+import { Routes, Route, Navigate, useLocation } from "react-router";
 import { CartProvider } from "./context/CartContext";
 import { SettingsProvider } from "./context/SettingsContext";
 import { AdminAuthProvider, useAdminAuth } from "./admin/context/AdminAuth";
@@ -20,16 +20,24 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
   return <AdminLayout>{children}</AdminLayout>;
 }
 
+function PublicLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <>
+      <Navbar />
+      <CartDrawer />
+      {children}
+    </>
+  );
+}
+
 export default function App() {
   return (
     <SettingsProvider>
       <AdminAuthProvider>
         <CartProvider>
-          <Navbar />
-          <CartDrawer />
           <Routes>
-            <Route path="/" element={<><Home /><Footer /></>} />
-            <Route path="/catalogo" element={<><Catalogo /><Footer /></>} />
+            <Route path="/" element={<PublicLayout><><Home /><Footer /></></PublicLayout>} />
+            <Route path="/catalogo" element={<PublicLayout><><Catalogo /><Footer /></></PublicLayout>} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin" element={<AdminGuard><AdminDashboard /></AdminGuard>} />
             <Route path="/admin/productos" element={<AdminGuard><AdminProducts /></AdminGuard>} />
