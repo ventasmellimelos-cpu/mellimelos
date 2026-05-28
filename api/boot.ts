@@ -20,6 +20,7 @@ const indexPath = join(publicDir, "index.html");
 
 const app = new Hono();
 const port = parseInt(process.env.PORT || "3000");
+// Railway deploy timestamp: 2026-05-29-v2
 
 // Health check
 app.get("/api/trpc/ping", (c) => c.json({ ok: true, ts: Date.now() }));
@@ -61,6 +62,22 @@ app.use("/manifest.json", serveStatic({ root: publicDir }));
 app.use("/robots.txt", serveStatic({ root: publicDir }));
 app.use("/sitemap.xml", serveStatic({ root: publicDir }));
 app.use("/sw.js", serveStatic({ root: publicDir }));
+
+// Migration endpoint (call once to sync DB)
+app.get("/api/migrate", async (c) => {
+  try {
+    const client = postgres(env.databaseUrl);
+    await client`ALTER TABLE products ADD COLUMN IF NOT EXISTS images json`;
+    await client`ALTER TABLE products ADD COLUMN IF NOT EXISTS video_url varchar(500)`;
+    await client`ALTER TABLE products ADD COLUMN IF NOT EXISTS colors json`;
+    await client`CREATE TABLE IF NOT EXISTS product_variants (id SERIAL PRIMARY KEY, product_id INTEGER NOT NULL, color VARCHAR(100) NOT NULL, color_hex VARCHAR(20), size VARCHAR(50) NOT NULL, stock INTEGER DEFAULT 0, created_at TIMESTAMP NOT NULL DEFAULT NOW())`;
+    await client`CREATE TABLE IF NOT EXISTS uploads (id SERIAL PRIMARY KEY, filename VARCHAR(255) NOT NULL, mime_type VARCHAR(100) NOT NULL, data TEXT NOT NULL, created_at TIMESTAMP NOT NULL DEFAULT NOW())`;
+    await client.end();
+    return c.json({ ok: true, message: "Migration completed" });
+  } catch (e) {
+    return c.json({ ok: false, error: e instanceof Error ? e.message : String(e) }, 500);
+  }
+});
 
 // tRPC API handler
 app.all("/api/trpc/*", async (c) => {
