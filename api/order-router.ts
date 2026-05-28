@@ -34,8 +34,8 @@ export const orderRouter = createRouter({
         totalAmount: String(input.totalAmount),
         status: "pending",
         notes: input.notes,
-      });
-      return { success: true, orderId: Number(result[0].insertId) };
+      }).returning({ id: orders.id });
+      return { success: true, orderId: result[0]?.id ?? 0 };
     }),
 
   getByPhone: publicQuery
