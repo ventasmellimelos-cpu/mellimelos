@@ -1,0 +1,51 @@
+import { z } from "zod";
+import { createRouter, publicQuery } from "./middleware";
+import { getDb } from "./queries/connection";
+import { orders } from "@db/schema";
+import { eq, desc } from "drizzle-orm";
+
+export const orderRouter = createRouter({
+  create: publicQuery
+    .input(
+      z.object({
+        customerName: z.string().min(1),
+        customerPhone: z.string().min(1),
+        customerEmail: z.string().email().optional(),
+        items: z.array(
+          z.object({
+            productId: z.number(),
+            name: z.string(),
+            size: z.string(),
+            price: z.number(),
+            quantity: z.number().min(1),
+          })
+        ),
+        totalAmount: z.number().positive(),
+        notes: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      const result = await db.insert(orders).values({
+        customerName: input.customerName,
+        customerPhone: input.customerPhone,
+        customerEmail: input.customerEmail,
+        items: input.items,
+        totalAmount: String(input.totalAmount),
+        status: "pending",
+        notes: input.notes,
+      });
+      return { success: true, orderId: Number(result[0].insertId) };
+    }),
+
+  getByPhone: publicQuery
+    .input(z.object({ phone: z.string() }))
+    .query(async ({ input }) => {
+      const db = getDb();
+      return db
+        .select()
+        .from(orders)
+        .where(eq(orders.customerPhone, input.phone))
+        .orderBy(desc(orders.createdAt));
+    }),
+});
