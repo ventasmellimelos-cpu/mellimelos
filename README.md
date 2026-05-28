@@ -1,73 +1,50 @@
-# React + TypeScript + Vite
+# Melli Melos - Tienda de Ropa de Bebé
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Tienda online de ropa de bebé ubicada en Ituzaingó, Buenos Aires, Argentina.
 
-Currently, two official plugins are available:
+## Stack Tecnológico
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Frontend**: React + TypeScript + Vite + Tailwind CSS + shadcn/ui
+- **Backend**: Hono + tRPC + Drizzle ORM
+- **Base de Datos**: MySQL
+- **Despliegue**: Railway
 
-## React Compiler
+## Configuración de Variables de Entorno
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Crear un archivo `.env` con las siguientes variables:
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```env
+APP_ID=your_app_id
+APP_SECRET=your_app_secret
+VITE_APP_ID=your_app_id
+DATABASE_URL=mysql://user:password@host:port/database
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Scripts Disponibles
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+| Comando | Descripción |
+|---------|-------------|
+| `npm run dev` | Inicia servidor de desarrollo |
+| `npm run build` | Compila para producción |
+| `npm run start` | Inicia servidor de producción |
+| `npm run db:push` | Sincroniza schema con la base de datos |
+| `npm run db:migrate` | Aplica migraciones pendientes |
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## Despliegue en Railway
+
+1. Conectar el repositorio de GitHub a Railway
+2. Railway detectará automáticamente el proyecto Node.js
+3. Configurar las variables de entorno en el dashboard de Railway
+4. ¡Listo! Railway desplegará automáticamente
+
+## Datos de Contacto
+
+- WhatsApp: +54 9 11 3484-8466
+- Email: ventasmellimelos@gmail.com
+- Instagram: [@melli_melos](https://www.instagram.com/melli_melos/)
+- Facebook: [Melli Melos Ropa de Bebes](https://www.facebook.com/mellimelosropadebebes/)
+- TikTok: [@melli_melos](https://www.tiktok.com/@melli_melos)
+
+## Dirección
+
+Calle Francisco Emperanza 2700, Ituzaingó, Buenos Aires, Argentina
