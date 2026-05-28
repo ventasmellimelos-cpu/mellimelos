@@ -15,7 +15,8 @@ async function seed() {
     {
       name: "Body Manga Larga Premium",
       description: "Body de algodón orgánico 100% con mangas largas. Suave al tacto, ideal para el día a día de tu bebé. Disponible en varios colores pastel.",
-      price: "8500.00",
+      price: "4999.00",
+      salePrice: "3999.00",
       imageUrl: "/images/products/product-1.jpg",
       category: "bodies" as const,
       sizes: ["0-3m", "3-6m", "6-9m", "9-12m"],
@@ -27,8 +28,8 @@ async function seed() {
     {
       name: "Body Nubes Mint",
       description: "Body manga corta con adorable estampado de nubecitas. Color menta fresco. 100% algodón peinado. Ideal para primavera-verano.",
-      price: "7900.00",
-      salePrice: "6900.00",
+      price: "4999.00",
+      salePrice: "3999.00",
       imageUrl: "/images/products/product-5.jpg",
       category: "bodies" as const,
       sizes: ["0-3m", "3-6m", "6-9m", "9-12m", "12-18m"],
@@ -40,8 +41,8 @@ async function seed() {
     {
       name: "Pack 3 Bodies Clásicos",
       description: "Pack de 3 bodies en colores blanco, gris y rosa pálido. Algodón 100%, cuello envelope para fácil cambio. El básico indispensable.",
-      price: "18900.00",
-      salePrice: "15900.00",
+      price: "9999.00",
+      salePrice: "6999.00",
       imageUrl: "/images/products/product-15.jpg",
       category: "bodies" as const,
       sizes: ["0-3m", "3-6m", "6-9m", "9-12m", "12-18m", "18-24m"],
@@ -53,7 +54,8 @@ async function seed() {
     {
       name: "Body Manga Corta Básico",
       description: "Body manga corta en algodón pima. Disponible en blanco, crema y rosa pálido. Escote envelope para fácil vestido.",
-      price: "6900.00",
+      price: "4499.00",
+      salePrice: "3999.00",
       imageUrl: "/images/products/product-1.jpg",
       category: "bodies" as const,
       sizes: ["0-3m", "3-6m", "6-9m", "9-12m", "12-18m", "18-24m"],
@@ -65,7 +67,8 @@ async function seed() {
     {
       name: "Body Elefantitos Gris",
       description: "Body manga corta con tierno estampado de elefantes. Color gris melange. Algodón súper suave. Unisex.",
-      price: "7500.00",
+      price: "4999.00",
+      salePrice: "3999.00",
       imageUrl: "/images/products/product-18.jpg",
       category: "bodies" as const,
       sizes: ["0-3m", "3-6m", "6-9m", "9-12m"],
@@ -77,7 +80,8 @@ async function seed() {
     {
       name: "Pack Bodies Colores Pastel x3",
       description: "Tres bodies manga larga en tonos rosa, menta y lila. Tela ribbed con elastano para mayor comodidad. Perfectos para capas.",
-      price: "19500.00",
+      price: "10999.00",
+      salePrice: "7699.00",
       imageUrl: "/images/products/product-15.jpg",
       category: "bodies" as const,
       sizes: ["0-3m", "3-6m", "6-9m", "9-12m", "12-18m"],
@@ -89,7 +93,8 @@ async function seed() {
     {
       name: "Body Oso Tejido",
       description: "Body manga larga con aplicación de osito tejido en el pecho. Color crema. Ideal para los días fríos. Algodón orgánico.",
-      price: "9200.00",
+      price: "5499.00",
+      salePrice: "3999.00",
       imageUrl: "/images/products/product-20.jpg",
       category: "bodies" as const,
       sizes: ["0-3m", "3-6m", "6-9m", "9-12m"],
@@ -101,8 +106,8 @@ async function seed() {
     {
       name: "Body Musculosa Pack x3",
       description: "Pack de 3 musculosas en blanco, gris y rosa. Ideales para el verano. Algodón 100%, tela ribbed.",
-      price: "9900.00",
-      salePrice: "8500.00",
+      price: "8999.00",
+      salePrice: "6299.00",
       imageUrl: "/images/products/product-24.jpg",
       category: "bodies" as const,
       sizes: ["0-3m", "3-6m", "6-9m", "9-12m", "12-18m"],
@@ -115,7 +120,8 @@ async function seed() {
     {
       name: "Buzo Polar con Pie",
       description: "Buzo polar ultra suave con pie integrado. Mantiene abrigadito a tu bebé durante los días fríos. Tela plush de alta calidad.",
-      price: "12900.00",
+      price: "6999.00",
+      salePrice: "4899.00",
       imageUrl: "/images/products/product-2.jpg",
       category: "conjuntos" as const,
       sizes: ["0-3m", "3-6m", "6-9m", "9-12m", "12-18m"],
@@ -127,7 +133,8 @@ async function seed() {
     {
       name: "Conjunto Tejido Sage",
       description: "Hermoso conjunto de saquito tejido y pantalón en color verde sage. Botones de madera naturales. Ideal para ocasiones especiales.",
-      price: "15800.00",
+      price: "7999.00",
+      salePrice: "5599.00",
       imageUrl: "/images/products/product-3.jpg",
       category: "conjuntos" as const,
       sizes: ["0-3m", "3-6m", "6-9m", "9-12m"],
@@ -139,7 +146,8 @@ async function seed() {
     {
       name: "Vestido Floral Rosa",
       description: "Vestido de algodón con estampado floral en tonos rosados. Mangas cortas con elástico. Ideal para ocasiones especiales o el día a día.",
-      price: "13500.00",
+      price: "6999.00",
+      salePrice: "4899.00",
       imageUrl: "/images/products/product-7.jpg",
       category: "conjuntos" as const,
       sizes: ["0-3m", "3-6m", "6-9m", "9-12m", "12-18m"],
@@ -151,7 +159,8 @@ async function seed() {
     {
       name: "Jardinero Denim",
       description: "Jardinero de jean suave con botones de madera y forro de algodón. Un clásico que nunca pasa de moda. Muy cómodo.",
-      price: "14200.00",
+      price: "7499.00",
+      salePrice: "5249.00",
       imageUrl: "/images/products/product-8.jpg",
       category: "conjuntos" as const,
       sizes: ["3-6m", "6-9m", "9-12m", "12-18m", "18-24m"],
@@ -163,7 +172,8 @@ async function seed() {
     {
       name: "Conjunto Rayas Marinero",
       description: "Remera manga larga a rayas blanco y azul marino, combinada con pantalón de algodón gris. Look marinero irresistible.",
-      price: "11800.00",
+      price: "5999.00",
+      salePrice: "4799.00",
       imageUrl: "/images/products/product-11.jpg",
       category: "conjuntos" as const,
       sizes: ["0-3m", "3-6m", "6-9m", "9-12m", "12-18m"],
@@ -175,7 +185,8 @@ async function seed() {
     {
       name: "Campera de Jean Mini",
       description: "Campera de jean liviana con broches metálicos y forro de algodón. Un básico atemporal para el guardarropita de tu bebé.",
-      price: "16500.00",
+      price: "8499.00",
+      salePrice: "5949.00",
       imageUrl: "/images/products/product-16.jpg",
       category: "conjuntos" as const,
       sizes: ["3-6m", "6-9m", "9-12m", "12-18m", "18-24m"],
@@ -187,7 +198,8 @@ async function seed() {
     {
       name: "Campera Puffer Rosa",
       description: "Campera inflada tipo puffer en color rosa empolvado con capucha. Impermeable y abrigada. Ideal para el invierno.",
-      price: "18900.00",
+      price: "9499.00",
+      salePrice: "6649.00",
       imageUrl: "/images/products/product-23.jpg",
       category: "conjuntos" as const,
       sizes: ["3-6m", "6-9m", "9-12m", "12-18m"],
@@ -200,7 +212,8 @@ async function seed() {
     {
       name: "Set Gorro y Manoplas",
       description: "Set de gorro con nudo y manoplas anti-rasguños en color peach. Algodón jersey suave y elástico. Perfecto para recién nacidos.",
-      price: "6200.00",
+      price: "3499.00",
+      salePrice: "2799.00",
       imageUrl: "/images/products/product-4.jpg",
       category: "accesorios" as const,
       sizes: ["0-3m", "3-6m"],
@@ -212,7 +225,8 @@ async function seed() {
     {
       name: "Manta Waffle Premium",
       description: "Manta de textura waffle en color crema. Ultra suave y absorbente. Perfecta para envolver a tu bebé o para el cambio de pañales.",
-      price: "9500.00",
+      price: "5499.00",
+      salePrice: "3849.00",
       imageUrl: "/images/products/product-6.jpg",
       category: "accesorios" as const,
       sizes: ["UNICO"],
@@ -224,7 +238,8 @@ async function seed() {
     {
       name: "Swaddle Muselina Blanca",
       description: "Gasa de muselina 100% algodón, perfecta para envolver al recién nacido. Liviana, breathable y se suaviza con cada lavado.",
-      price: "7200.00",
+      price: "3999.00",
+      salePrice: "3199.00",
       imageUrl: "/images/products/product-9.jpg",
       category: "accesorios" as const,
       sizes: ["UNICO"],
@@ -236,7 +251,8 @@ async function seed() {
     {
       name: "Escarpines Tejidos",
       description: "Escarpines tejidos a mano en lana merino súper suave. Color crema con lazo decorativo. Ideal para mantener calentitos los piecitos.",
-      price: "5800.00",
+      price: "3299.00",
+      salePrice: "2639.00",
       imageUrl: "/images/products/product-10.jpg",
       category: "accesorios" as const,
       sizes: ["0-3m", "3-6m", "6-9m"],
@@ -248,7 +264,8 @@ async function seed() {
     {
       name: "Toalla con Capucha Osito",
       description: "Toalla de algodón con capucha con orejitas de oso. Textura towel absorbente. Ideal para después del baño. Tamaño grande.",
-      price: "8900.00",
+      price: "4999.00",
+      salePrice: "3999.00",
       imageUrl: "/images/products/product-14.jpg",
       category: "accesorios" as const,
       sizes: ["UNICO"],
@@ -261,7 +278,8 @@ async function seed() {
     {
       name: "Set Regalo Bienvenida",
       description: "Hermoso set de regalo que incluye body, gorrito, manoplas y babero en caja kraft con moño rosa. Listo para entregar.",
-      price: "18500.00",
+      price: "9999.00",
+      salePrice: "6999.00",
       imageUrl: "/images/products/product-22.jpg",
       category: "regalo" as const,
       sizes: ["0-3m", "3-6m"],
@@ -273,8 +291,8 @@ async function seed() {
     {
       name: "Canastilla de Bienvenida",
       description: "Canastilla completa con 5 prendas esenciales: bodies, pantaloncitos, gorro, babero y manta. Presentada en caja de regalo.",
-      price: "24500.00",
-      salePrice: "21900.00",
+      price: "12999.00",
+      salePrice: "9099.00",
       imageUrl: "/images/categories/regalo.jpg",
       category: "regalo" as const,
       sizes: ["0-3m", "3-6m"],
@@ -286,7 +304,8 @@ async function seed() {
     {
       name: "Bolsa de Dormir Oso",
       description: "Bolsa de dormir acolchada con cara de osito bordada. Color gris. Ideal para que tu bebé duerma cómodo y seguro sin mantas sueltas.",
-      price: "16800.00",
+      price: "8999.00",
+      salePrice: "6299.00",
       imageUrl: "/images/products/product-13.jpg",
       category: "regalo" as const,
       sizes: ["0-3m", "3-6m", "6-9m", "9-12m"],
@@ -298,7 +317,8 @@ async function seed() {
     {
       name: "Set Vinchas Pack x3",
       description: "Tres vinchas elásticas con moño grande en colores rosa, crema y verde. Algodón jersey suave. No dejan marcas.",
-      price: "4900.00",
+      price: "2999.00",
+      salePrice: "2399.00",
       imageUrl: "/images/products/product-17.jpg",
       category: "regalo" as const,
       sizes: ["UNICO"],
@@ -313,7 +333,7 @@ async function seed() {
     await db.insert(products).values(product);
   }
 
-  console.log(`Seeded ${seedProducts.length} products successfully!`);
+  console.log(`Seeded ${seedProducts.length} products with promotional prices!`);
 }
 
 seed().catch(console.error);
