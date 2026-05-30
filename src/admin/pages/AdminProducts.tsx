@@ -1,18 +1,9 @@
 import { useState, useRef, useEffect } from "react";
-import {
-  Plus, Pencil, Trash2, Search, Package, X, ImageIcon,
-  Play, ChevronLeft, ChevronRight
-} from "lucide-react";
-import { trpc } from "@/providers/trpc";
+import { Plus, Pencil, Trash2, Search, Package, X, ImageIcon, Play, ChevronLeft, ChevronRight } from "lucide-react";
 
 const categories = ["bodies", "conjuntos", "accesorios", "regalo"] as const;
 
-interface ProductVariant {
-  color: string;
-  colorHex: string;
-  size: string;
-  stock: number;
-}
+interface ProductVariant { color: string; colorHex: string; size: string; stock: number; }
 
 export default function AdminProducts() {
   const [search, setSearch] = useState("");
@@ -20,6 +11,8 @@ export default function AdminProducts() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [imagePreviewIdx, setImagePreviewIdx] = useState(0);
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const imageInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
@@ -38,47 +31,25 @@ export default function AdminProducts() {
   const [newSize, setNewSize] = useState("");
   const [uploadingCount, setUploadingCount] = useState(0);
 
-  const utils = trpc.useUtils();
-  const { data: trpcData, isLoading: trpcLoading, error: trpcError } = trpc.product.list.useQuery({ search: search || undefined, limit: 100 });
-  
-  // Fallback: fetch directly if tRPC fails
-  const [fallbackData, setFallbackData] = useState<any>(null);
-  const [fallbackLoading, setFallbackLoading] = useState(false);
-  
-  useEffect(() => {
-    if (trpcError && !trpcLoading) {
-      setFallbackLoading(true);
-      fetch("/api/trpc/product.list")
-        .then(r => r.json())
-        .then(json => {
-          const items = json?.result?.data?.json?.items ?? [];
-          setFallbackData({ items, total: items.length });
-        })
-        .catch(() => setFallbackData({ items: [], total: 0 }))
-        .finally(() => setFallbackLoading(false));
-    }
-  }, [trpcError, trpcLoading]);
-  
-  const data = trpcData ?? fallbackData;
-  const isLoading = trpcLoading || fallbackLoading;
+  // Load products via fetch
+  const loadProducts = async () => {
+    try {
+      const res = await fetch("/api/trpc/product.list");
+      const json = await res.json();
+      const items = json?.result?.data?.json?.items ?? [];
+      setProducts(items);
+    } catch (e) { console.error(e); }
+    setLoading(false);
+  };
 
-  const createMutation = trpc.product.create.useMutation({
-    onSuccess: () => { utils.product.list.invalidate(); setShowForm(false); resetForm(); },
-  });
-  const updateMutation = trpc.product.update.useMutation({
-    onSuccess: () => { utils.product.list.invalidate(); setShowForm(false); setEditingId(null); resetForm(); },
-  });
-  const deleteMutation = trpc.product.delete.useMutation({
-    onSuccess: () => { utils.product.list.invalidate(); setDeleteId(null); },
-  });
+  useEffect(() => { loadProducts(); }, []);
+
+  const filteredProducts = search
+    ? products.filter((p: any) => p.name.toLowerCase().includes(search.toLowerCase()))
+    : products;
 
   const resetForm = () => {
-    setForm({
-      name: "", description: "", price: "", salePrice: "",
-      images: [], videoUrl: "", category: "bodies",
-      colors: [], isFeatured: false, isNew: false, isBestseller: false,
-      variants: [],
-    });
+    setForm({ name: "", description: "", price: "", salePrice: "", images: [], videoUrl: "", category: "bodies", colors: [], isFeatured: false, isNew: false, isBestseller: false, variants: [] });
     setNewColor(""); setNewColorHex("#F8E1E4"); setNewSize(""); setImagePreviewIdx(0);
   };
 
@@ -94,20 +65,16 @@ export default function AdminProducts() {
       isFeatured: product.isFeatured ?? false,
       isNew: product.isNew ?? false,
       isBestseller: product.isBestseller ?? false,
-      variants: (product.variants ?? []).map((v: any) => ({
-        color: v.color, colorHex: v.colorHex ?? "#E8E8E8",
-        size: v.size, stock: v.stock ?? 0,
-      })),
+      variants: (product.variants ?? []).map((v: any) => ({ color: v.color, colorHex: v.colorHex ?? "#E8E8E8", size: v.size, stock: v.stock ?? 0 })),
     });
     setShowForm(true);
   };
 
-  // Fast upload using FormData + fetch (no base64, no FileReader)
   const uploadFile = async (file: File): Promise<string | null> => {
     const data = new FormData();
     data.append("file", file);
     const res = await fetch("/api/upload", { method: "POST", body: data });
-    if (!res.ok) { console.error("Upload failed:", await res.text()); return null; }
+    if (!res.ok) return null;
     const json = await res.json();
     return json.url ?? null;
   };
@@ -153,22 +120,16 @@ export default function AdminProducts() {
     if (!color) return;
     if (form.colors.includes(color)) { alert("Ese color ya existe."); return; }
     setForm((prev) => ({ ...prev, colors: [...prev.colors, color] }));
-
-    // Auto-generate variants for existing sizes
     if (form.variants.length > 0) {
       const sizes = [...new Set(form.variants.map((v) => v.size))];
-      const newVariants = sizes.map((s) => ({ color, colorHex: newColorHex, size: s, stock: 10 }));
-      setForm((prev) => ({ ...prev, variants: [...prev.variants, ...newVariants] }));
+      const newVars = sizes.map((s) => ({ color, colorHex: newColorHex, size: s, stock: 10 }));
+      setForm((prev) => ({ ...prev, variants: [...prev.variants, ...newVars] }));
     }
     setNewColor(""); setNewColorHex("#F8E1E4");
   };
 
   const removeColor = (color: string) => {
-    setForm((prev) => ({
-      ...prev,
-      colors: prev.colors.filter((c) => c !== color),
-      variants: prev.variants.filter((v) => v.color !== color),
-    }));
+    setForm((prev) => ({ ...prev, colors: prev.colors.filter((c) => c !== color), variants: prev.variants.filter((v) => v.color !== color) }));
   };
 
   const addSize = () => {
@@ -176,16 +137,11 @@ export default function AdminProducts() {
     if (!size) return;
     const sizes = [...new Set(form.variants.map((v) => v.size))];
     if (sizes.includes(size)) { alert("Ese talle ya existe."); return; }
-
-    // Generate variants for all colors
     const colors = form.colors.length > 0 ? form.colors : ["Único"];
-    const colorHexes: Record<string, string> = {};
-    form.variants.forEach((v) => { colorHexes[v.color] = v.colorHex; });
-
-    const newVariants = colors.map((c) => ({
-      color: c, colorHex: colorHexes[c] ?? "#E8E8E8", size, stock: 10,
-    }));
-    setForm((prev) => ({ ...prev, variants: [...prev.variants, ...newVariants] }));
+    const hexMap: Record<string, string> = {};
+    form.variants.forEach((v) => { hexMap[v.color] = v.colorHex; });
+    const newVars = colors.map((c) => ({ color: c, colorHex: hexMap[c] ?? "#E8E8E8", size, stock: 10 }));
+    setForm((prev) => ({ ...prev, variants: [...prev.variants, ...newVars] }));
     setNewSize("");
   };
 
@@ -194,65 +150,80 @@ export default function AdminProducts() {
   };
 
   const updateVariantStock = (color: string, size: string, stock: number) => {
-    setForm((prev) => ({
-      ...prev,
-      variants: prev.variants.map((v) =>
-        v.color === color && v.size === size ? { ...v, stock: Math.max(0, stock) } : v
-      ),
-    }));
+    setForm((prev) => ({ ...prev, variants: prev.variants.map((v) => v.color === color && v.size === size ? { ...v, stock: Math.max(0, stock) } : v) }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const data = {
+    const payload = {
       name: form.name, description: form.description || undefined,
       price: parseFloat(form.price), salePrice: form.salePrice ? parseFloat(form.salePrice) : undefined,
       images: form.images.length > 0 ? form.images : undefined,
       videoUrl: form.videoUrl || undefined,
       category: form.category,
       colors: form.colors.length > 0 ? form.colors : undefined,
-      isFeatured: form.isFeatured, isNew: form.isNew,
-      isBestseller: form.isBestseller,
+      isFeatured: form.isFeatured, isNew: form.isNew, isBestseller: form.isBestseller,
       variants: form.variants.length > 0 ? form.variants : undefined,
     };
-    if (editingId) { updateMutation.mutate({ id: editingId, ...data }); }
-    else { createMutation.mutate(data); }
+
+    try {
+      if (editingId) {
+        await fetch("/api/trpc/product.update", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: editingId, ...payload }),
+        });
+      } else {
+        await fetch("/api/trpc/product.create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      }
+      setShowForm(false); setEditingId(null); resetForm(); loadProducts();
+    } catch (err) { console.error(err); alert("Error al guardar el producto."); }
   };
 
-  const isSubmitting = createMutation.isPending || updateMutation.isPending || uploadingCount > 0;
+  const handleDelete = async (id: number) => {
+    try {
+      await fetch("/api/trpc/product.delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      setDeleteId(null); loadProducts();
+    } catch (err) { console.error(err); }
+  };
+
   const uniqueSizes = [...new Set(form.variants.map((v) => v.size))];
-  const uniqueColors = [...new Set(form.variants.map((v) => v.color))];
+  const isSubmitting = uploadingCount > 0;
 
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="font-display text-3xl font-bold text-[#2D2D2D]">Productos</h1>
-          <p className="font-body text-[#6B6B6B] mt-1">{data?.items.length ?? 0} productos en tu tienda</p>
+          <p className="font-body text-[#6B6B6B] mt-1">{products.length} productos en tu tienda</p>
         </div>
-        <button
-          onClick={() => { setShowForm(true); setEditingId(null); resetForm(); }}
-          className="flex items-center gap-2 bg-[#2D2D2D] text-white font-body font-medium px-5 py-2.5 rounded-xl hover:bg-[#F8E1E4] hover:text-[#2D2D2D] transition-all"
-        >
+        <button onClick={() => { setShowForm(true); setEditingId(null); resetForm(); }}
+          className="flex items-center gap-2 bg-[#2D2D2D] text-white font-body font-medium px-5 py-2.5 rounded-xl hover:bg-[#F8E1E4] hover:text-[#2D2D2D] transition-all">
           <Plus size={18} /> Crear producto
         </button>
       </div>
 
-      {/* Search */}
       <div className="relative mb-6">
         <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6B6B6B]" />
         <input type="text" placeholder="Buscar productos..." value={search} onChange={(e) => setSearch(e.target.value)}
           className="w-full pl-11 pr-4 py-3 rounded-xl border border-[#E0D5CC] bg-white font-body text-sm focus:outline-none focus:ring-2 focus:ring-[#F8E1E4]" />
       </div>
 
-      {/* Products table */}
       <div className="bg-white rounded-2xl shadow-soft overflow-hidden">
-        {isLoading ? (
+        {loading ? (
           <div className="p-12 text-center font-body text-[#6B6B6B]">Cargando...</div>
-        ) : data?.items.length === 0 ? (
+        ) : filteredProducts.length === 0 ? (
           <div className="p-12 text-center">
             <Package size={48} className="text-[#D4A5A5] mx-auto mb-3" />
-            <p className="font-body text-[#6B6B6B]">No hay productos</p>
+            <p className="font-body text-[#6B6B6B]">{search ? "No se encontraron productos" : "No hay productos"}</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -268,16 +239,14 @@ export default function AdminProducts() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#F0EBE5]">
-                {data?.items.map((p: any) => (
+                {filteredProducts.map((p: any) => (
                   <tr key={p.id} className="hover:bg-[#FFF8F0] transition-colors">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-[#F5F0EB] flex items-center justify-center overflow-hidden">
                           {p.images?.[0] || p.imageUrl ? (
-                            <img src={p.images?.[0] ?? p.imageUrl ?? ""} alt="" className="w-full h-full object-cover" />
-                          ) : (
-                            <Package size={16} className="text-[#D4A5A5]" />
-                          )}
+                            <img src={p.images?.[0] ?? p.imageUrl} alt="" className="w-full h-full object-cover" />
+                          ) : (<Package size={16} className="text-[#D4A5A5]" />)}
                         </div>
                         <div>
                           <span className="font-body text-sm text-[#2D2D2D] font-medium block truncate max-w-[200px]">{p.name}</span>
@@ -297,9 +266,7 @@ export default function AdminProducts() {
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-3 font-body text-xs text-[#6B6B6B]">
-                      {[...new Set((p.variants ?? []).map((v: any) => v.size))].join(", ") || "-"}
-                    </td>
+                    <td className="px-4 py-3 font-body text-xs text-[#6B6B6B]">{[...new Set((p.variants ?? []).map((v: any) => v.size))].join(", ") || "-"}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-2">
                         <button onClick={() => openEdit(p)} className="p-2 rounded-lg hover:bg-[#F8E1E4] transition-colors"><Pencil size={16} className="text-[#6B6B6B]" /></button>
@@ -325,23 +292,17 @@ export default function AdminProducts() {
 
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* LEFT COLUMN */}
                 <div className="space-y-4">
-                  {/* Name */}
                   <div>
                     <label className="font-body text-sm font-medium text-[#2D2D2D] mb-1 block">Nombre *</label>
                     <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required
                       className="w-full px-4 py-2.5 rounded-xl border border-[#E0D5CC] font-body text-sm focus:outline-none focus:ring-2 focus:ring-[#F8E1E4]" />
                   </div>
-
-                  {/* Description */}
                   <div>
                     <label className="font-body text-sm font-medium text-[#2D2D2D] mb-1 block">Descripción</label>
                     <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
                       rows={3} className="w-full px-4 py-2.5 rounded-xl border border-[#E0D5CC] font-body text-sm focus:outline-none focus:ring-2 focus:ring-[#F8E1E4]" />
                   </div>
-
-                  {/* Prices */}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="font-body text-sm font-medium text-[#2D2D2D] mb-1 block">Precio ($) *</label>
@@ -354,8 +315,6 @@ export default function AdminProducts() {
                         className="w-full px-4 py-2.5 rounded-xl border border-[#E0D5CC] font-body text-sm focus:outline-none focus:ring-2 focus:ring-[#F8E1E4]" />
                     </div>
                   </div>
-
-                  {/* Category */}
                   <div>
                     <label className="font-body text-sm font-medium text-[#2D2D2D] mb-1 block">Categoría *</label>
                     <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value as typeof categories[number] })}
@@ -363,8 +322,6 @@ export default function AdminProducts() {
                       {categories.map((c) => <option key={c} value={c}>{c}</option>)}
                     </select>
                   </div>
-
-                  {/* Flags */}
                   <div className="flex gap-4 items-center pt-2">
                     <label className="flex items-center gap-2 font-body text-sm"><input type="checkbox" checked={form.isFeatured} onChange={(e) => setForm({ ...form, isFeatured: e.target.checked })} /> Destacado</label>
                     <label className="flex items-center gap-2 font-body text-sm"><input type="checkbox" checked={form.isNew} onChange={(e) => setForm({ ...form, isNew: e.target.checked })} /> Nuevo</label>
@@ -372,19 +329,12 @@ export default function AdminProducts() {
                   </div>
                 </div>
 
-                {/* RIGHT COLUMN - IMAGES & VIDEO */}
                 <div className="space-y-4">
-                  {/* Image Gallery */}
                   <div>
-                    <label className="font-body text-sm font-medium text-[#2D2D2D] mb-1 block">
-                      Imágenes ({form.images.length}/10)
-                    </label>
-                    <input ref={imageInputRef} type="file" accept="image/png,image/jpeg,image/webp" multiple
-                      onChange={handleImageUpload} className="hidden" />
-
+                    <label className="font-body text-sm font-medium text-[#2D2D2D] mb-1 block">Imágenes ({form.images.length}/10)</label>
+                    <input ref={imageInputRef} type="file" accept="image/png,image/jpeg,image/webp" multiple onChange={handleImageUpload} className="hidden" />
                     {form.images.length > 0 ? (
                       <div className="space-y-2">
-                        {/* Main preview */}
                         <div className="relative w-full h-44 rounded-xl border border-[#E0D5CC] overflow-hidden bg-[#F5F0EB]">
                           <img src={form.images[imagePreviewIdx]} alt="" className="w-full h-full object-contain" />
                           {uploadingCount > 0 && (
@@ -397,28 +347,18 @@ export default function AdminProducts() {
                           )}
                           {form.images.length > 1 && (
                             <>
-                              <button type="button" onClick={() => setImagePreviewIdx((i) => Math.max(0, i - 1))}
-                                className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 bg-white/80 rounded-full hover:bg-white"><ChevronLeft size={16} /></button>
-                              <button type="button" onClick={() => setImagePreviewIdx((i) => Math.min(form.images.length - 1, i + 1))}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-white/80 rounded-full hover:bg-white"><ChevronRight size={16} /></button>
+                              <button type="button" onClick={() => setImagePreviewIdx((i) => Math.max(0, i - 1))} className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 bg-white/80 rounded-full hover:bg-white"><ChevronLeft size={16} /></button>
+                              <button type="button" onClick={() => setImagePreviewIdx((i) => Math.min(form.images.length - 1, i + 1))} className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-white/80 rounded-full hover:bg-white"><ChevronRight size={16} /></button>
                             </>
                           )}
-                          <button type="button" onClick={() => setForm((p) => ({ ...p, images: p.images.filter((_, i) => i !== imagePreviewIdx) }))}
-                            className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600"><X size={12} /></button>
+                          <button type="button" onClick={() => setForm((p) => ({ ...p, images: p.images.filter((_, i) => i !== imagePreviewIdx) }))} className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600"><X size={12} /></button>
                         </div>
-                        {/* Thumbnail strip */}
                         <div className="flex gap-2 flex-wrap">
                           {form.images.map((img, idx) => (
-                            <button key={idx} type="button" onClick={() => setImagePreviewIdx(idx)}
-                              className={`w-12 h-12 rounded-lg border-2 overflow-hidden ${idx === imagePreviewIdx ? "border-[#D4A5A5]" : "border-transparent"}`}>
-                              <img src={img} alt="" className="w-full h-full object-cover" />
-                            </button>
+                            <button key={idx} type="button" onClick={() => setImagePreviewIdx(idx)} className={`w-12 h-12 rounded-lg border-2 overflow-hidden ${idx === imagePreviewIdx ? "border-[#D4A5A5]" : "border-transparent"}`}><img src={img} alt="" className="w-full h-full object-cover" /></button>
                           ))}
                           {form.images.length < 10 && (
-                            <button type="button" onClick={() => imageInputRef.current?.click()}
-                              className="w-12 h-12 rounded-lg border-2 border-dashed border-[#E0D5CC] flex items-center justify-center hover:border-[#D4A5A5] transition-colors">
-                              <Plus size={16} className="text-[#B0A8A0]" />
-                            </button>
+                            <button type="button" onClick={() => imageInputRef.current?.click()} className="w-12 h-12 rounded-lg border-2 border-dashed border-[#E0D5CC] flex items-center justify-center hover:border-[#D4A5A5] transition-colors"><Plus size={16} className="text-[#B0A8A0]" /></button>
                           )}
                         </div>
                       </div>
@@ -432,25 +372,18 @@ export default function AdminProducts() {
                     )}
                   </div>
 
-                  {/* Video */}
                   <div>
                     <label className="font-body text-sm font-medium text-[#2D2D2D] mb-1 block">Video del producto</label>
-                    <input ref={videoInputRef} type="file" accept="video/mp4,video/webm,video/quicktime"
-                      onChange={handleVideoUpload} className="hidden" />
-
+                    <input ref={videoInputRef} type="file" accept="video/mp4,video/webm,video/quicktime" onChange={handleVideoUpload} className="hidden" />
                     {form.videoUrl ? (
                       <div className="relative w-full h-32 rounded-xl border border-[#E0D5CC] overflow-hidden bg-[#F5F0EB] flex items-center justify-center">
                         <video src={form.videoUrl} className="w-full h-full object-contain" controls />
-                        <button type="button" onClick={() => setForm((p) => ({ ...p, videoUrl: "" }))}
-                          className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600"><X size={12} /></button>
+                        <button type="button" onClick={() => setForm((p) => ({ ...p, videoUrl: "" }))} className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600"><X size={12} /></button>
                       </div>
                     ) : (
                       <button type="button" onClick={() => videoInputRef.current?.click()}
                         className="w-full h-20 rounded-xl border-2 border-dashed border-[#E0D5CC] bg-[#F5F0EB] flex flex-col items-center justify-center gap-1 hover:border-[#D4A5A5] transition-colors cursor-pointer">
-                        <div className="flex items-center gap-2">
-                          <Play size={18} className="text-[#D4A5A5]" />
-                          <span className="font-body text-sm text-[#6B6B6B]">Subir video (MP4, WEBM, MOV)</span>
-                        </div>
+                        <div className="flex items-center gap-2"><Play size={18} className="text-[#D4A5A5]" /><span className="font-body text-sm text-[#6B6B6B]">Subir video (MP4, WEBM, MOV)</span></div>
                         <span className="font-body text-xs text-[#B0A8A0]">Max. 20MB</span>
                       </button>
                     )}
@@ -458,85 +391,66 @@ export default function AdminProducts() {
                 </div>
               </div>
 
-              {/* VARIANTS SECTION */}
               <div className="border-t border-[#F0EBE5] pt-6">
                 <h3 className="font-display text-lg font-semibold text-[#2D2D2D] mb-4">Variantes de Color y Talle</h3>
-
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Colors */}
                   <div>
                     <label className="font-body text-sm font-medium text-[#2D2D2D] mb-2 block">Colores disponibles</label>
                     <div className="flex gap-2 mb-3">
                       <input value={newColor} onChange={(e) => setNewColor(e.target.value)} placeholder="Ej: Rosa, Celeste..."
                         className="flex-1 px-3 py-2 rounded-xl border border-[#E0D5CC] font-body text-sm focus:outline-none focus:ring-2 focus:ring-[#F8E1E4]" />
-                      <input type="color" value={newColorHex} onChange={(e) => setNewColorHex(e.target.value)}
-                        className="w-10 h-10 rounded-xl border border-[#E0D5CC] cursor-pointer" />
-                      <button type="button" onClick={addColor}
-                        className="px-4 py-2 bg-[#F8E1E4] text-[#2D2D2D] rounded-xl font-body text-sm hover:bg-[#F5D0D5] transition-colors">Agregar</button>
+                      <input type="color" value={newColorHex} onChange={(e) => setNewColorHex(e.target.value)} className="w-10 h-10 rounded-xl border border-[#E0D5CC] cursor-pointer" />
+                      <button type="button" onClick={addColor} className="px-4 py-2 bg-[#F8E1E4] text-[#2D2D2D] rounded-xl font-body text-sm hover:bg-[#F5D0D5] transition-colors">Agregar</button>
                     </div>
                     <div className="flex gap-2 flex-wrap">
                       {form.colors.map((c) => {
                         const v = form.variants.find((v2) => v2.color === c);
                         return (
                           <span key={c} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-body"
-                            style={{ backgroundColor: v?.colorHex ?? "#F8E1E4" + "30", border: "1px solid " + (v?.colorHex ?? "#F8E1E4") }}>
-                            <span className="w-3 h-3 rounded-full" style={{ backgroundColor: v?.colorHex ?? "#E8E8E8" }} />
-                            {c}
+                            style={{ backgroundColor: (v?.colorHex ?? "#F8E1E4") + "30", border: "1px solid " + (v?.colorHex ?? "#F8E1E4") }}>
+                            <span className="w-3 h-3 rounded-full" style={{ backgroundColor: v?.colorHex ?? "#E8E8E8" }} />{c}
                             <button type="button" onClick={() => removeColor(c)} className="ml-1 hover:text-red-500"><X size={12} /></button>
                           </span>
                         );
                       })}
                     </div>
                   </div>
-
-                  {/* Sizes */}
                   <div>
                     <label className="font-body text-sm font-medium text-[#2D2D2D] mb-2 block">Talles disponibles</label>
                     <div className="flex gap-2 mb-3">
                       <input value={newSize} onChange={(e) => setNewSize(e.target.value)} placeholder="Ej: 0-3m, 3-6m..."
                         className="flex-1 px-3 py-2 rounded-xl border border-[#E0D5CC] font-body text-sm focus:outline-none focus:ring-2 focus:ring-[#F8E1E4]" />
-                      <button type="button" onClick={addSize}
-                        className="px-4 py-2 bg-[#F8E1E4] text-[#2D2D2D] rounded-xl font-body text-sm hover:bg-[#F5D0D5] transition-colors">Agregar</button>
+                      <button type="button" onClick={addSize} className="px-4 py-2 bg-[#F8E1E4] text-[#2D2D2D] rounded-xl font-body text-sm hover:bg-[#F5D0D5] transition-colors">Agregar</button>
                     </div>
                     <div className="flex gap-2 flex-wrap">
-                      {uniqueSizes.map((s) => (
-                        <span key={s} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-[#F5F0EB] text-sm font-body">
-                          {s}
-                          <button type="button" onClick={() => removeSize(s)} className="ml-1 hover:text-red-500"><X size={12} /></button>
-                        </span>
+                      {[...new Set(form.variants.map((v) => v.size))].map((s) => (
+                        <span key={s} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-[#F5F0EB] text-sm font-body">{s}<button type="button" onClick={() => removeSize(s)} className="ml-1 hover:text-red-500"><X size={12} /></button></span>
                       ))}
                     </div>
                   </div>
                 </div>
 
-                {/* Stock matrix */}
-                {uniqueColors.length > 0 && uniqueSizes.length > 0 && (
+                {form.colors.length > 0 && uniqueSizes.length > 0 && (
                   <div className="mt-4 overflow-x-auto">
                     <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-[#F0EBE5]">
-                          <th className="text-left py-2 px-3 font-body font-medium text-[#6B6B6B]">Color \ Talle</th>
-                          {uniqueSizes.map((s) => <th key={s} className="text-center py-2 px-3 font-body font-medium text-[#6B6B6B]">{s}</th>)}
-                        </tr>
-                      </thead>
+                      <thead><tr className="border-b border-[#F0EBE5]">
+                        <th className="text-left py-2 px-3 font-body font-medium text-[#6B6B6B]">Color \ Talle</th>
+                        {uniqueSizes.map((s) => <th key={s} className="text-center py-2 px-3 font-body font-medium text-[#6B6B6B]">{s}</th>)}
+                      </tr></thead>
                       <tbody>
-                        {uniqueColors.map((c) => {
+                        {[...new Set(form.variants.map((v) => v.color))].map((c) => {
                           const v = form.variants.find((v2) => v2.color === c);
                           return (
                             <tr key={c} className="border-b border-[#F0EBE5]/50">
                               <td className="py-2 px-3 font-body flex items-center gap-2">
-                                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: v?.colorHex ?? "#E8E8E8" }} />
-                                {c}
+                                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: v?.colorHex ?? "#E8E8E8" }} />{c}
                               </td>
                               {uniqueSizes.map((s) => {
                                 const variant = form.variants.find((v2) => v2.color === c && v2.size === s);
-                                return (
-                                  <td key={s} className="py-2 px-1 text-center">
-                                    <input type="number" min={0} value={variant?.stock ?? 0}
-                                      onChange={(e) => updateVariantStock(c, s, parseInt(e.target.value) || 0)}
-                                      className="w-14 py-1 px-1 text-center rounded-lg border border-[#E0D5CC] font-body text-xs focus:outline-none focus:ring-1 focus:ring-[#F8E1E4]" />
-                                  </td>
-                                );
+                                return (<td key={s} className="py-2 px-1 text-center">
+                                  <input type="number" min={0} value={variant?.stock ?? 0} onChange={(e) => updateVariantStock(c, s, parseInt(e.target.value) || 0)}
+                                    className="w-14 py-1 px-1 text-center rounded-lg border border-[#E0D5CC] font-body text-xs focus:outline-none focus:ring-1 focus:ring-[#F8E1E4]" />
+                                </td>);
                               })}
                             </tr>
                           );
@@ -547,7 +461,6 @@ export default function AdminProducts() {
                 )}
               </div>
 
-              {/* Submit */}
               <div className="flex gap-3 pt-4 border-t border-[#F0EBE5]">
                 <button type="button" onClick={() => setShowForm(false)}
                   className="flex-1 px-4 py-3 rounded-xl border border-[#E0D5CC] font-body font-medium text-sm hover:bg-[#F5F0EB] transition-all">Cancelar</button>
@@ -570,7 +483,7 @@ export default function AdminProducts() {
             <p className="font-body text-sm text-[#6B6B6B] mb-6">¿Estás seguro? Esta acción no se puede deshacer.</p>
             <div className="flex gap-3">
               <button onClick={() => setDeleteId(null)} className="flex-1 px-4 py-2.5 rounded-xl border border-[#E0D5CC] font-body text-sm hover:bg-[#F5F0EB]">Cancelar</button>
-              <button onClick={() => deleteMutation.mutate({ id: deleteId })} className="flex-1 bg-red-500 text-white px-4 py-2.5 rounded-xl font-body text-sm hover:bg-red-600 transition-all">Eliminar</button>
+              <button onClick={() => handleDelete(deleteId)} className="flex-1 bg-red-500 text-white px-4 py-2.5 rounded-xl font-body text-sm hover:bg-red-600 transition-all">Eliminar</button>
             </div>
           </div>
         </div>
