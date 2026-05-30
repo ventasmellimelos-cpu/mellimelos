@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Plus, Pencil, Trash2, Search, Package, X, ImageIcon,
   Play, ChevronLeft, ChevronRight
@@ -39,7 +39,28 @@ export default function AdminProducts() {
   const [uploadingCount, setUploadingCount] = useState(0);
 
   const utils = trpc.useUtils();
-  const { data, isLoading } = trpc.product.list.useQuery({ search: search || undefined, limit: 100 });
+  const { data: trpcData, isLoading: trpcLoading, error: trpcError } = trpc.product.list.useQuery({ search: search || undefined, limit: 100 });
+  
+  // Fallback: fetch directly if tRPC fails
+  const [fallbackData, setFallbackData] = useState<any>(null);
+  const [fallbackLoading, setFallbackLoading] = useState(false);
+  
+  useEffect(() => {
+    if (trpcError && !trpcLoading) {
+      setFallbackLoading(true);
+      fetch("/api/trpc/product.list")
+        .then(r => r.json())
+        .then(json => {
+          const items = json?.result?.data?.json?.items ?? [];
+          setFallbackData({ items, total: items.length });
+        })
+        .catch(() => setFallbackData({ items: [], total: 0 }))
+        .finally(() => setFallbackLoading(false));
+    }
+  }, [trpcError, trpcLoading]);
+  
+  const data = trpcData ?? fallbackData;
+  const isLoading = trpcLoading || fallbackLoading;
 
   const createMutation = trpc.product.create.useMutation({
     onSuccess: () => { utils.product.list.invalidate(); setShowForm(false); resetForm(); },
@@ -247,7 +268,7 @@ export default function AdminProducts() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#F0EBE5]">
-                {data?.items.map((p) => (
+                {data?.items.map((p: any) => (
                   <tr key={p.id} className="hover:bg-[#FFF8F0] transition-colors">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
