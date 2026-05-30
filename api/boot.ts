@@ -19,7 +19,7 @@ const indexPath = join(publicDir, "index.html");
 
 const app = new Hono();
 const port = parseInt(process.env.PORT || "3000");
-// Railway deploy timestamp: 2026-05-29-v4-auto-seed
+// Railway deploy timestamp: 2026-05-29-v5-trpc-batch
 
 // Health check
 app.get("/api/trpc/ping", (c) => c.json({ ok: true, ts: Date.now() }));
@@ -110,6 +110,8 @@ app.all("/api/trpc/*", async (c) => {
     req: c.req.raw,
     router: appRouter,
     createContext,
+    allowBatching: true,
+    allowMethodOverride: true,
   });
 });
 
