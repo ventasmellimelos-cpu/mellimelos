@@ -51,8 +51,6 @@ export default function AdminProducts() {
     onSuccess: () => { utils.product.list.invalidate(); setDeleteId(null); },
   });
 
-  const uploadMutation = trpc.upload.create.useMutation();
-
   const resetForm = () => {
     setForm({
       name: "", description: "", price: "", salePrice: "",
@@ -83,63 +81,50 @@ export default function AdminProducts() {
     setShowForm(true);
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Fast upload using FormData + fetch (no base64, no FileReader)
+  const uploadFile = async (file: File): Promise<string | null> => {
+    const data = new FormData();
+    data.append("file", file);
+    const res = await fetch("/api/upload", { method: "POST", body: data });
+    if (!res.ok) { console.error("Upload failed:", await res.text()); return null; }
+    const json = await res.json();
+    return json.url ?? null;
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
-
     const remainingSlots = 10 - form.images.length;
-    const filesToProcess = Math.min(files.length, remainingSlots);
-    if (filesToProcess <= 0) { alert("Máximo 10 imágenes."); return; }
+    const filesToProcess = Array.from(files).slice(0, remainingSlots);
+    if (filesToProcess.length === 0) { alert("Máximo 10 imágenes."); return; }
 
-    setUploadingCount(filesToProcess);
-    let completed = 0;
+    const validTypes = ["image/jpeg", "image/png", "image/webp"];
+    setUploadingCount(filesToProcess.length);
+    let done = 0;
 
-    for (let i = 0; i < filesToProcess; i++) {
-      const file = files[i];
-      const validTypes = ["image/jpeg", "image/png", "image/webp"];
-      if (!validTypes.includes(file.type)) continue;
-      if (file.size > 5 * 1024 * 1024) continue;
-
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64 = reader.result as string;
-        const base64Data = base64.split(",")[1];
-        uploadMutation.mutate(
-          { filename: file.name, mimeType: file.type, data: base64Data },
-          {
-            onSuccess: (data) => {
-              setForm((prev) => ({ ...prev, images: [...prev.images, data.url] }));
-              completed++;
-              setUploadingCount(filesToProcess - completed);
-            },
-            onError: () => { completed++; setUploadingCount(filesToProcess - completed); },
-          }
-        );
-      };
-      reader.readAsDataURL(file);
+    for (const file of filesToProcess) {
+      if (!validTypes.includes(file.type) || file.size > 5 * 1024 * 1024) { done++; setUploadingCount(filesToProcess.length - done); continue; }
+      try {
+        const url = await uploadFile(file);
+        if (url) setForm((prev) => ({ ...prev, images: [...prev.images, url] }));
+      } catch (err) { console.error(err); }
+      done++;
+      setUploadingCount(filesToProcess.length - done);
     }
   };
 
-  const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const validTypes = ["video/mp4", "video/webm", "video/quicktime"];
     if (!validTypes.includes(file.type)) { alert("Solo MP4, WEBM o MOV."); return; }
     if (file.size > 20 * 1024 * 1024) { alert("El video no debe superar 20MB."); return; }
-
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64 = reader.result as string;
-      const base64Data = base64.split(",")[1];
-      uploadMutation.mutate(
-        { filename: file.name, mimeType: file.type, data: base64Data },
-        {
-          onSuccess: (data) => { setForm((prev) => ({ ...prev, videoUrl: data.url })); },
-          onError: () => { alert("Error al subir el video."); },
-        }
-      );
-    };
-    reader.readAsDataURL(file);
+    setUploadingCount(1);
+    try {
+      const url = await uploadFile(file);
+      if (url) setForm((prev) => ({ ...prev, videoUrl: url }));
+    } catch (err) { console.error(err); alert("Error al subir el video."); }
+    setUploadingCount(0);
   };
 
   const addColor = () => {
