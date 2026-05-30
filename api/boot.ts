@@ -7,7 +7,10 @@ import { readFileSync, existsSync } from "fs";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { appRouter } from "./router";
 import { createContext } from "./context";
-import { getUploadById } from "./json-store";
+import { getUploadById, seedIfEmpty } from "./json-store";
+
+// Auto-seed products on startup (safe, idempotent)
+try { seedIfEmpty(); } catch (e) { console.error("Seed error:", e); }
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -16,7 +19,7 @@ const indexPath = join(publicDir, "index.html");
 
 const app = new Hono();
 const port = parseInt(process.env.PORT || "3000");
-// Railway deploy timestamp: 2026-05-29-v3-fast-upload
+// Railway deploy timestamp: 2026-05-29-v4-auto-seed
 
 // Health check
 app.get("/api/trpc/ping", (c) => c.json({ ok: true, ts: Date.now() }));
