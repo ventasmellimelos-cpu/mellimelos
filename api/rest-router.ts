@@ -3,46 +3,38 @@ import {
   getProducts, getProductById, createProduct, updateProduct, deleteProduct,
   getVariantsByProductId, createVariants, deleteVariantsByProductId,
   getOrders, createOrder, updateOrderStatus,
-  getUploadById, createUpload,
-  seedIfEmpty,
 } from "./json-store";
-
-// Seed on first load
-try { seedIfEmpty(); } catch (e) { console.error("Seed error:", e); }
 
 const restApi = new Hono();
 
 // PRODUCTS
-restApi.get("/products", (c) => {
-  let items = getProducts();
+restApi.get("/products", async (c) => {
+  let items = await getProducts();
   const search = c.req.query("search");
   const category = c.req.query("category");
 
   if (category) items = items.filter((p) => p.category === category);
   if (search) items = items.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()));
 
-  // Add variants to each product
-  const withVariants = items.map((p) => ({
-    ...p,
-    variants: getVariantsByProductId(p.id),
-  }));
+  const withVariants = await Promise.all(
+    items.map(async (p) => ({ ...p, variants: await getVariantsByProductId(p.id) }))
+  );
 
   return c.json({ items: withVariants, total: items.length });
 });
 
-restApi.get("/products/:id", (c) => {
+restApi.get("/products/:id", async (c) => {
   const id = parseInt(c.req.param("id"));
-  const product = getProductById(id);
+  const product = await getProductById(id);
   if (!product) return c.json({ error: "Not found" }, 404);
-  return c.json({ ...product, variants: getVariantsByProductId(id) });
+  return c.json({ ...product, variants: await getVariantsByProductId(id) });
 });
 
 restApi.post("/products", async (c) => {
   try {
     const body = await c.req.json();
 
-    // Create product
-    const product = createProduct({
+    const product = await createProduct({
       name: body.name,
       description: body.description || null,
       price: String(body.price),
@@ -58,12 +50,11 @@ restApi.post("/products", async (c) => {
       stock: body.stock || 0,
     });
 
-    // Create variants if provided
     if (body.variants && body.variants.length > 0) {
-      createVariants(body.variants.map((v: any) => ({ ...v, productId: product.id })));
+      await createVariants(body.variants.map((v: any) => ({ ...v, productId: product.id })));
     }
 
-    return c.json({ success: true, id: product.id, product: { ...product, variants: getVariantsByProductId(product.id) } }, 201);
+    return c.json({ success: true, id: product.id, product: { ...product, variants: await getVariantsByProductId(product.id) } }, 201);
   } catch (e) {
     console.error("Create product error:", e);
     return c.json({ error: e instanceof Error ? e.message : "Failed to create product" }, 500);
@@ -75,7 +66,7 @@ restApi.put("/products/:id", async (c) => {
     const id = parseInt(c.req.param("id"));
     const body = await c.req.json();
 
-    updateProduct(id, {
+    await updateProduct(id, {
       name: body.name,
       description: body.description || null,
       price: String(body.price),
@@ -91,11 +82,10 @@ restApi.put("/products/:id", async (c) => {
       stock: body.stock || 0,
     });
 
-    // Update variants
     if (body.variants !== undefined) {
-      deleteVariantsByProductId(id);
+      await deleteVariantsByProductId(id);
       if (body.variants.length > 0) {
-        createVariants(body.variants.map((v: any) => ({ ...v, productId: id })));
+        await createVariants(body.variants.map((v: any) => ({ ...v, productId: id })));
       }
     }
 
@@ -106,22 +96,22 @@ restApi.put("/products/:id", async (c) => {
   }
 });
 
-restApi.delete("/products/:id", (c) => {
+restApi.delete("/products/:id", async (c) => {
   const id = parseInt(c.req.param("id"));
-  deleteProduct(id);
+  await deleteProduct(id);
   return c.json({ success: true });
 });
 
 // ORDERS
-restApi.get("/orders", (c) => {
-  const items = getOrders();
+restApi.get("/orders", async (c) => {
+  const items = await getOrders();
   return c.json({ items, total: items.length });
 });
 
 restApi.post("/orders", async (c) => {
   try {
     const body = await c.req.json();
-    const order = createOrder({
+    const order = await createOrder({
       customerName: body.customerName,
       customerPhone: body.customerPhone,
       customerEmail: body.customerEmail || null,
@@ -139,7 +129,7 @@ restApi.post("/orders", async (c) => {
 restApi.patch("/orders/:id/status", async (c) => {
   const id = parseInt(c.req.param("id"));
   const body = await c.req.json();
-  updateOrderStatus(id, body.status);
+  await updateOrderStatus(id, body.status);
   return c.json({ success: true });
 });
 

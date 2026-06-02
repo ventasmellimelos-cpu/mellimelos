@@ -1,193 +1,295 @@
-import { readFileSync, writeFileSync, existsSync } from "fs";
-import { join } from "path";
+// Storage backed by Postgres (persistent on Railway).
+// Same module name kept for backward compatibility with existing callers.
+import "dotenv/config";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
+import { eq } from "drizzle-orm";
+import * as schema from "@db/schema";
+import { products, productVariants, orders, settings, uploads } from "@db/schema";
 
-const DATA_FILE = join(process.cwd(), "data", "store.json");
-
-interface Store {
-  products: any[];
-  orders: any[];
-  settings: any[];
-  uploads: any[];
-  productVariants: any[];
+const DATABASE_URL = process.env.DATABASE_URL;
+if (!DATABASE_URL) {
+  throw new Error(
+    "DATABASE_URL is required. Add a Postgres service in Railway and set DATABASE_URL env var."
+  );
 }
 
-let store: Store | null = null;
-let nextId = { products: 1, orders: 1, settings: 1, uploads: 1, productVariants: 1 };
+const sqlClient = postgres(DATABASE_URL, { max: 5, prepare: false });
+const db = drizzle(sqlClient, { schema });
 
-function loadStore(): Store {
-  try {
-    if (existsSync(DATA_FILE)) {
-      const data = JSON.parse(readFileSync(DATA_FILE, "utf-8"));
-      // Restore nextIds
-      nextId.products = (data.products?.length ?? 0) > 0 ? Math.max(...data.products.map((p: any) => p.id)) + 1 : 1;
-      nextId.orders = (data.orders?.length ?? 0) > 0 ? Math.max(...data.orders.map((o: any) => o.id)) + 1 : 1;
-      nextId.uploads = (data.uploads?.length ?? 0) > 0 ? Math.max(...data.uploads.map((u: any) => u.id)) + 1 : 1;
-      nextId.productVariants = (data.productVariants?.length ?? 0) > 0 ? Math.max(...data.productVariants.map((v: any) => v.id)) + 1 : 1;
-      return data;
-    }
-  } catch (e) {
-    console.error("Error loading store:", e);
-  }
-  return { products: [], orders: [], settings: [], uploads: [], productVariants: [] };
+// Idempotent schema creation - safe to run on every boot.
+let schemaReady: Promise<void> | null = null;
+export function ensureSchema(): Promise<void> {
+  if (schemaReady) return schemaReady;
+  schemaReady = (async () => {
+    await sqlClient.unsafe(`
+      DO $$ BEGIN
+        CREATE TYPE category AS ENUM ('bodies', 'conjuntos', 'accesorios', 'regalo');
+      EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+      DO $$ BEGIN
+        CREATE TYPE status AS ENUM ('pending', 'confirmed', 'shipped', 'delivered');
+      EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+      CREATE TABLE IF NOT EXISTS products (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        description TEXT,
+        price DECIMAL(10, 2) NOT NULL,
+        sale_price DECIMAL(10, 2),
+        image_url VARCHAR(500),
+        images JSON,
+        video_url VARCHAR(500),
+        category category NOT NULL,
+        sizes JSON,
+        colors JSON,
+        is_featured BOOLEAN DEFAULT false,
+        is_new BOOLEAN DEFAULT false,
+        is_bestseller BOOLEAN DEFAULT false,
+        stock INTEGER DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS product_variants (
+        id SERIAL PRIMARY KEY,
+        product_id INTEGER NOT NULL,
+        color VARCHAR(100) NOT NULL,
+        color_hex VARCHAR(20),
+        size VARCHAR(50) NOT NULL,
+        stock INTEGER DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS orders (
+        id SERIAL PRIMARY KEY,
+        customer_name VARCHAR(255) NOT NULL,
+        customer_phone VARCHAR(50) NOT NULL,
+        customer_email VARCHAR(255),
+        items JSON NOT NULL,
+        total_amount DECIMAL(10, 2) NOT NULL,
+        status status DEFAULT 'pending',
+        notes TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS settings (
+        id SERIAL PRIMARY KEY,
+        key VARCHAR(100) NOT NULL UNIQUE,
+        value TEXT NOT NULL,
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS uploads (
+        id SERIAL PRIMARY KEY,
+        filename VARCHAR(255) NOT NULL,
+        mime_type VARCHAR(100) NOT NULL,
+        data TEXT NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      );
+    `);
+    console.log("[db] schema ready");
+  })();
+  return schemaReady;
 }
 
-function saveStore() {
-  try {
-    const dir = join(process.cwd(), "data");
-    if (!existsSync(dir)) {
-      const fs = require("fs");
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    writeFileSync(DATA_FILE, JSON.stringify(store, null, 2));
-  } catch (e) {
-    console.error("Error saving store:", e);
-  }
+// Drizzle rows already use camelCase keys (mapped from snake_case columns via schema).
+// Keep return shapes identical to the previous json-store implementation.
+
+// ============ Products ============
+export async function getProducts(): Promise<any[]> {
+  await ensureSchema();
+  return await db.select().from(products);
 }
 
-function getStore(): Store {
-  if (!store) {
-    store = loadStore();
-  }
-  return store;
+export async function getProductById(id: number): Promise<any | null> {
+  await ensureSchema();
+  const rows = await db.select().from(products).where(eq(products.id, id)).limit(1);
+  return rows[0] ?? null;
 }
 
-// Products
-export function getProducts(): any[] {
-  return getStore().products;
+export async function createProduct(data: any): Promise<any> {
+  await ensureSchema();
+  const rows = await db
+    .insert(products)
+    .values({
+      name: data.name,
+      description: data.description ?? null,
+      price: String(data.price),
+      salePrice: data.salePrice ? String(data.salePrice) : null,
+      imageUrl: data.imageUrl ?? null,
+      images: data.images ?? [],
+      videoUrl: data.videoUrl ?? null,
+      category: data.category,
+      sizes: data.sizes ?? ["0-3m", "3-6m", "6-9m"],
+      colors: data.colors ?? [],
+      isFeatured: data.isFeatured ?? false,
+      isNew: data.isNew ?? false,
+      isBestseller: data.isBestseller ?? false,
+      stock: data.stock ?? 0,
+    })
+    .returning();
+  return rows[0];
 }
 
-export function getProductById(id: number): any | null {
-  return getStore().products.find((p) => p.id === id) ?? null;
+export async function updateProduct(id: number, data: any): Promise<boolean> {
+  await ensureSchema();
+  const result = await db
+    .update(products)
+    .set({
+      name: data.name,
+      description: data.description ?? null,
+      price: String(data.price),
+      salePrice: data.salePrice ? String(data.salePrice) : null,
+      imageUrl: data.imageUrl ?? null,
+      images: data.images ?? [],
+      videoUrl: data.videoUrl ?? null,
+      category: data.category,
+      sizes: data.sizes ?? ["0-3m", "3-6m", "6-9m"],
+      colors: data.colors ?? [],
+      isFeatured: data.isFeatured ?? false,
+      isNew: data.isNew ?? false,
+      isBestseller: data.isBestseller ?? false,
+      stock: data.stock ?? 0,
+    })
+    .where(eq(products.id, id))
+    .returning({ id: products.id });
+  return result.length > 0;
 }
 
-export function createProduct(data: any): any {
-  const s = getStore();
-  const product = { ...data, id: nextId.products++, createdAt: new Date().toISOString() };
-  s.products.push(product);
-  saveStore();
-  return product;
+export async function deleteProduct(id: number): Promise<boolean> {
+  await ensureSchema();
+  await db.delete(productVariants).where(eq(productVariants.productId, id));
+  const result = await db.delete(products).where(eq(products.id, id)).returning({ id: products.id });
+  return result.length > 0;
 }
 
-export function updateProduct(id: number, data: any): boolean {
-  const s = getStore();
-  const idx = s.products.findIndex((p) => p.id === id);
-  if (idx === -1) return false;
-  s.products[idx] = { ...s.products[idx], ...data };
-  saveStore();
-  return true;
+// ============ Product Variants ============
+export async function getVariantsByProductId(productId: number): Promise<any[]> {
+  await ensureSchema();
+  return await db.select().from(productVariants).where(eq(productVariants.productId, productId));
 }
 
-export function deleteProduct(id: number): boolean {
-  const s = getStore();
-  s.products = s.products.filter((p) => p.id !== id);
-  s.productVariants = s.productVariants.filter((v) => v.productId !== id);
-  saveStore();
-  return true;
+export async function createVariants(variants: any[]): Promise<any[]> {
+  if (variants.length === 0) return [];
+  await ensureSchema();
+  return await db.insert(productVariants).values(
+    variants.map((v) => ({
+      productId: v.productId,
+      color: v.color,
+      colorHex: v.colorHex ?? null,
+      size: v.size,
+      stock: v.stock ?? 0,
+    }))
+  ).returning();
 }
 
-// Product Variants
-export function getVariantsByProductId(productId: number): any[] {
-  return getStore().productVariants.filter((v) => v.productId === productId);
+export async function deleteVariantsByProductId(productId: number): Promise<void> {
+  await ensureSchema();
+  await db.delete(productVariants).where(eq(productVariants.productId, productId));
 }
 
-export function createVariants(variants: any[]): any[] {
-  const s = getStore();
-  const created = variants.map((v) => ({ ...v, id: nextId.productVariants++ }));
-  s.productVariants.push(...created);
-  saveStore();
-  return created;
+// ============ Orders ============
+export async function getOrders(): Promise<any[]> {
+  await ensureSchema();
+  return await db.select().from(orders);
 }
 
-export function deleteVariantsByProductId(productId: number): void {
-  const s = getStore();
-  s.productVariants = s.productVariants.filter((v) => v.productId !== productId);
-  saveStore();
+export async function createOrder(data: any): Promise<any> {
+  await ensureSchema();
+  const rows = await db
+    .insert(orders)
+    .values({
+      customerName: data.customerName,
+      customerPhone: data.customerPhone,
+      customerEmail: data.customerEmail ?? null,
+      items: data.items,
+      totalAmount: String(data.totalAmount),
+      status: data.status ?? "pending",
+      notes: data.notes ?? null,
+    })
+    .returning();
+  return rows[0];
 }
 
-// Orders
-export function getOrders(): any[] {
-  return getStore().orders;
+export async function updateOrderStatus(id: number, status: string): Promise<boolean> {
+  await ensureSchema();
+  const result = await db
+    .update(orders)
+    .set({ status: status as any, updatedAt: new Date() })
+    .where(eq(orders.id, id))
+    .returning({ id: orders.id });
+  return result.length > 0;
 }
 
-export function createOrder(data: any): any {
-  const s = getStore();
-  const order = { ...data, id: nextId.orders++, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
-  s.orders.push(order);
-  saveStore();
-  return order;
+// ============ Settings ============
+export async function getSettings(): Promise<any[]> {
+  await ensureSchema();
+  return await db.select().from(settings);
 }
 
-export function updateOrderStatus(id: number, status: string): boolean {
-  const s = getStore();
-  const idx = s.orders.findIndex((o) => o.id === id);
-  if (idx === -1) return false;
-  s.orders[idx].status = status;
-  s.orders[idx].updatedAt = new Date().toISOString();
-  saveStore();
-  return true;
+export async function getSettingByKey(key: string): Promise<any | null> {
+  await ensureSchema();
+  const rows = await db.select().from(settings).where(eq(settings.key, key)).limit(1);
+  return rows[0] ?? null;
 }
 
-// Settings
-export function getSettings(): any[] {
-  return getStore().settings;
-}
-
-export function getSettingByKey(key: string): any | null {
-  return getStore().settings.find((s) => s.key === key) ?? null;
-}
-
-export function setSetting(key: string, value: string): void {
-  const s = getStore();
-  const idx = s.settings.findIndex((s2) => s2.key === key);
-  if (idx >= 0) {
-    s.settings[idx].value = value;
-    s.settings[idx].updatedAt = new Date().toISOString();
+export async function setSetting(key: string, value: string): Promise<void> {
+  await ensureSchema();
+  const existing = await db.select().from(settings).where(eq(settings.key, key)).limit(1);
+  if (existing.length > 0) {
+    await db.update(settings).set({ value, updatedAt: new Date() }).where(eq(settings.key, key));
   } else {
-    s.settings.push({ id: nextId.settings++, key, value, updatedAt: new Date().toISOString() });
+    await db.insert(settings).values({ key, value });
   }
-  saveStore();
 }
 
-// Uploads
-export function createUpload(data: any): any {
-  const s = getStore();
-  const upload = { ...data, id: nextId.uploads++, createdAt: new Date().toISOString() };
-  s.uploads.push(upload);
-  saveStore();
-  return upload;
+// ============ Uploads ============
+export async function createUpload(data: { filename: string; mimeType: string; data: string }): Promise<any> {
+  await ensureSchema();
+  const rows = await db
+    .insert(uploads)
+    .values({
+      filename: data.filename,
+      mimeType: data.mimeType,
+      data: data.data,
+    })
+    .returning();
+  return rows[0];
 }
 
-export function getUploadById(id: number): any | null {
-  return getStore().uploads.find((u) => u.id === id) ?? null;
+export async function getUploadById(id: number): Promise<any | null> {
+  await ensureSchema();
+  const rows = await db.select().from(uploads).where(eq(uploads.id, id)).limit(1);
+  return rows[0] ?? null;
 }
 
-// Seed initial data if empty
-export function seedIfEmpty() {
-  const s = getStore();
-  if (s.products.length === 0) {
-    console.log("Seeding initial products...");
-    const seedProducts = [
-      { name: "Body Manga Larga Premium", description: "Body de algodón orgánico 100% con mangas largas.", price: "49990.00", salePrice: "39990.00", images: ["/images/products/product-1.jpg"], category: "bodies", sizes: ["0-3m","3-6m","6-9m"], colors: ["Blanco","Rosa","Celeste"], isFeatured: true, isNew: true, isBestseller: true, stock: 25 },
-      { name: "Buzo Polar con Pie", description: "Buzo polar ultra suave con pie integrado.", price: "69990.00", salePrice: "48990.00", images: ["/images/products/product-2.jpg"], category: "conjuntos", sizes: ["0-3m","3-6m","6-9m"], colors: ["Blanco","Rosa","Gris"], isFeatured: true, isNew: false, isBestseller: true, stock: 18 },
-      { name: "Conjunto Tejido Sage", description: "Saquito tejido a mano y pantalón.", price: "79990.00", salePrice: "55990.00", images: ["/images/products/product-3.jpg"], category: "conjuntos", sizes: ["0-3m","3-6m","6-9m"], colors: ["Blanco","Celeste"], isFeatured: true, isNew: true, isBestseller: false, stock: 12 },
-      { name: "Set Gorro y Manoplas", description: "Set en color peach.", price: "34990.00", salePrice: "27990.00", images: ["/images/products/product-4.jpg"], category: "accesorios", sizes: ["0-3m","3-6m"], colors: ["Rosa","Celeste"], isFeatured: true, isNew: false, isBestseller: true, stock: 30 },
-      { name: "Body Nubes Mint", description: "Body con estampado de nubes.", price: "49990.00", salePrice: "39990.00", images: ["/images/products/product-5.jpg"], category: "bodies", sizes: ["0-3m","3-6m","6-9m"], colors: ["Celeste","Gris"], isFeatured: true, isNew: false, isBestseller: false, stock: 20 },
-      { name: "Manta Waffle Premium", description: "Manta textura waffle crema.", price: "54990.00", salePrice: "38490.00", images: ["/images/products/product-6.jpg"], category: "accesorios", sizes: ["UNICO"], colors: ["Blanco"], isFeatured: true, isNew: true, isBestseller: false, stock: 15 },
-    ];
-    for (const p of seedProducts) {
-      createProduct(p);
-    }
-    // Create variants
-    for (const p of s.products) {
-      const colors = p.colors || ["Blanco"];
-      const sizes = p.sizes || ["0-3m"];
-      const colorHexes: Record<string, string> = { "Blanco": "#FFFFFF", "Rosa": "#F8E1E4", "Celeste": "#B8D4E3", "Gris": "#D0D0D0" };
-      for (const color of colors) {
-        for (const size of sizes) {
-          createVariants([{ productId: p.id, color, colorHex: colorHexes[color] || "#E8E8E8", size, stock: Math.floor(Math.random() * 15) + 5 }]);
-        }
+// ============ Seed ============
+export async function seedIfEmpty(): Promise<void> {
+  await ensureSchema();
+  const existing = await db.select({ id: products.id }).from(products).limit(1);
+  if (existing.length > 0) return;
+
+  console.log("[db] seeding initial products...");
+  const seedProducts = [
+    { name: "Body Manga Larga Premium", description: "Body de algodón orgánico 100% con mangas largas.", price: "49990.00", salePrice: "39990.00", images: ["/images/products/product-1.jpg"], category: "bodies" as const, sizes: ["0-3m","3-6m","6-9m"], colors: ["Blanco","Rosa","Celeste"], isFeatured: true, isNew: true, isBestseller: true, stock: 25 },
+    { name: "Buzo Polar con Pie", description: "Buzo polar ultra suave con pie integrado.", price: "69990.00", salePrice: "48990.00", images: ["/images/products/product-2.jpg"], category: "conjuntos" as const, sizes: ["0-3m","3-6m","6-9m"], colors: ["Blanco","Rosa","Gris"], isFeatured: true, isNew: false, isBestseller: true, stock: 18 },
+    { name: "Conjunto Tejido Sage", description: "Saquito tejido a mano y pantalón.", price: "79990.00", salePrice: "55990.00", images: ["/images/products/product-3.jpg"], category: "conjuntos" as const, sizes: ["0-3m","3-6m","6-9m"], colors: ["Blanco","Celeste"], isFeatured: true, isNew: true, isBestseller: false, stock: 12 },
+    { name: "Set Gorro y Manoplas", description: "Set en color peach.", price: "34990.00", salePrice: "27990.00", images: ["/images/products/product-4.jpg"], category: "accesorios" as const, sizes: ["0-3m","3-6m"], colors: ["Rosa","Celeste"], isFeatured: true, isNew: false, isBestseller: true, stock: 30 },
+    { name: "Body Nubes Mint", description: "Body con estampado de nubes.", price: "49990.00", salePrice: "39990.00", images: ["/images/products/product-5.jpg"], category: "bodies" as const, sizes: ["0-3m","3-6m","6-9m"], colors: ["Celeste","Gris"], isFeatured: true, isNew: false, isBestseller: false, stock: 20 },
+    { name: "Manta Waffle Premium", description: "Manta textura waffle crema.", price: "54990.00", salePrice: "38490.00", images: ["/images/products/product-6.jpg"], category: "accesorios" as const, sizes: ["UNICO"], colors: ["Blanco"], isFeatured: true, isNew: true, isBestseller: false, stock: 15 },
+  ];
+
+  const colorHexes: Record<string, string> = { "Blanco": "#FFFFFF", "Rosa": "#F8E1E4", "Celeste": "#B8D4E3", "Gris": "#D0D0D0" };
+  for (const p of seedProducts) {
+    const inserted = await createProduct(p);
+    const variantRows: any[] = [];
+    for (const color of p.colors) {
+      for (const size of p.sizes) {
+        variantRows.push({ productId: inserted.id, color, colorHex: colorHexes[color] || "#E8E8E8", size, stock: Math.floor(Math.random() * 15) + 5 });
       }
     }
-    console.log(`Seeded ${s.products.length} products with ${s.productVariants.length} variants`);
+    if (variantRows.length > 0) await createVariants(variantRows);
   }
+  console.log(`[db] seeded ${seedProducts.length} products`);
 }

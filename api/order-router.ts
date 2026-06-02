@@ -12,7 +12,7 @@ export const orderRouter = createRouter({
       }).optional()
     )
     .query(async ({ input }) => {
-      let items = getOrders();
+      let items = await getOrders();
       if (input?.status) {
         items = items.filter((o) => o.status === input.status);
       }
@@ -43,7 +43,7 @@ export const orderRouter = createRouter({
       })
     )
     .mutation(async ({ input }) => {
-      const order = createOrder({
+      const order = await createOrder({
         customerName: input.customerName,
         customerPhone: input.customerPhone,
         customerEmail: input.customerEmail,
@@ -58,7 +58,7 @@ export const orderRouter = createRouter({
   updateStatus: publicQuery
     .input(z.object({ id: z.number(), status: z.enum(["pending", "confirmed", "shipped", "delivered"]) }))
     .mutation(async ({ input }) => {
-      updateOrderStatus(input.id, input.status);
+      await updateOrderStatus(input.id, input.status);
       return { success: true };
     }),
 });
