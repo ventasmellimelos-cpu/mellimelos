@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import superjson from "superjson";
 import type { AppRouter } from "../../api/router";
 import type { ReactNode } from "react";
+import { getAdminToken } from "@/admin/context/AdminAuth";
 
 export const trpc = createTRPCReact<AppRouter>();
 
@@ -13,11 +14,10 @@ const trpcClient = trpc.createClient({
     httpBatchLink({
       url: "/api/trpc",
       transformer: superjson,
-      fetch(input, init) {
-        return globalThis.fetch(input, {
-          ...(init ?? {}),
-          credentials: "include",
-        });
+      // Send the admin Bearer token when present so admin mutations authorize.
+      headers() {
+        const token = getAdminToken();
+        return token ? { Authorization: `Bearer ${token}` } : {};
       },
     }),
   ],

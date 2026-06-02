@@ -11,6 +11,10 @@ import Home from "./pages/Home";
 // Code-split: público (Catalogo) y todo el panel admin se cargan on-demand,
 // así el visitante de la home no descarga el JS del catálogo ni del admin.
 const Catalogo = lazy(() => import("./pages/Catalogo"));
+const Terminos = lazy(() => import("./pages/Terminos"));
+const Privacidad = lazy(() => import("./pages/Privacidad"));
+const Cambios = lazy(() => import("./pages/Cambios"));
+const Arrepentimiento = lazy(() => import("./pages/Arrepentimiento"));
 const AdminLogin = lazy(() => import("./admin/pages/AdminLogin"));
 const AdminLayout = lazy(() => import("./admin/components/AdminLayout"));
 const AdminDashboard = lazy(() => import("./admin/pages/AdminDashboard"));
@@ -51,6 +55,10 @@ export default function App() {
             <Routes>
               <Route path="/" element={<PublicLayout><><Home /><Footer /></></PublicLayout>} />
               <Route path="/catalogo" element={<PublicLayout><><Catalogo /><Footer /></></PublicLayout>} />
+              <Route path="/terminos" element={<PublicLayout><><Terminos /><Footer /></></PublicLayout>} />
+              <Route path="/privacidad" element={<PublicLayout><><Privacidad /><Footer /></></PublicLayout>} />
+              <Route path="/cambios-y-devoluciones" element={<PublicLayout><><Cambios /><Footer /></></PublicLayout>} />
+              <Route path="/arrepentimiento" element={<PublicLayout><><Arrepentimiento /><Footer /></></PublicLayout>} />
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route path="/admin" element={<AdminGuard><AdminDashboard /></AdminGuard>} />
               <Route path="/admin/productos" element={<AdminGuard><AdminProducts /></AdminGuard>} />

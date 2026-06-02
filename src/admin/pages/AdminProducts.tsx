@@ -1,5 +1,14 @@
 import { useState, useRef, useEffect } from "react";
 import { Plus, Pencil, Trash2, Search, Package, X, ImageIcon, Play, ChevronLeft, ChevronRight } from "lucide-react";
+import { getAdminToken } from "@/admin/context/AdminAuth";
+
+const authHeaders = (json = false): Record<string, string> => {
+  const token = getAdminToken();
+  const h: Record<string, string> = {};
+  if (json) h["Content-Type"] = "application/json";
+  if (token) h["Authorization"] = `Bearer ${token}`;
+  return h;
+};
 
 const categories = ["bodies", "conjuntos", "accesorios", "regalo"] as const;
 
@@ -74,7 +83,7 @@ export default function AdminProducts() {
     const data = new FormData();
     data.append("file", file);
     console.log(`[Upload] Sending file: ${file.name}, type: ${file.type}, size: ${file.size}`);
-    const res = await fetch("/api/upload", { method: "POST", body: data });
+    const res = await fetch("/api/upload", { method: "POST", body: data, headers: authHeaders() });
     if (!res.ok) {
       const errText = await res.text();
       console.error(`[Upload] Server error ${res.status}:`, errText);
@@ -195,13 +204,13 @@ export default function AdminProducts() {
       if (editingId) {
         await fetch(`/api/products/${editingId}`, {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          headers: authHeaders(true),
           body: JSON.stringify(payload),
         });
       } else {
         const res = await fetch("/api/products", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: authHeaders(true),
           body: JSON.stringify(payload),
         });
         const data = await res.json();
@@ -213,7 +222,7 @@ export default function AdminProducts() {
 
   const handleDelete = async (id: number) => {
     try {
-      await fetch(`/api/products/${id}`, { method: "DELETE" });
+      await fetch(`/api/products/${id}`, { method: "DELETE", headers: authHeaders() });
       setDeleteId(null); loadProducts();
     } catch (err) { console.error(err); }
   };

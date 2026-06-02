@@ -1,5 +1,14 @@
 import { useState, useEffect } from "react";
 import { Package, Truck, CheckCircle, Clock } from "lucide-react";
+import { getAdminToken } from "@/admin/context/AdminAuth";
+
+const authHeaders = (json = false): Record<string, string> => {
+  const token = getAdminToken();
+  const h: Record<string, string> = {};
+  if (json) h["Content-Type"] = "application/json";
+  if (token) h["Authorization"] = `Bearer ${token}`;
+  return h;
+};
 
 const statusLabels: Record<string, string> = {
   pending: "Pendiente",
@@ -23,7 +32,7 @@ export default function AdminOrders() {
 
   const loadOrders = async () => {
     try {
-      const res = await fetch("/api/orders");
+      const res = await fetch("/api/orders", { headers: authHeaders() });
       const json = await res.json();
       setOrders(json.items ?? []);
     } catch (e) { console.error(e); }
@@ -43,7 +52,7 @@ export default function AdminOrders() {
     try {
       await fetch(`/api/orders/${id}/status`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders(true),
         body: JSON.stringify({ status }),
       });
       await loadOrders();

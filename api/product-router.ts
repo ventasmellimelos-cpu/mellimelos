@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createRouter, publicQuery } from "./middleware";
+import { createRouter, publicQuery, adminProcedure } from "./middleware";
 import {
   getProducts, getProductById, createProduct, updateProduct, deleteProduct,
   getVariantsByProductId, createVariants, deleteVariantsByProductId,
@@ -73,7 +73,7 @@ export const productRouter = createRouter({
     );
   }),
 
-  create: publicQuery
+  create: adminProcedure
     .input(z.object({
       name: z.string().min(1),
       description: z.string().optional(),
@@ -119,7 +119,7 @@ export const productRouter = createRouter({
       return { success: true, id: product.id };
     }),
 
-  update: publicQuery
+  update: adminProcedure
     .input(z.object({
       id: z.number(),
       name: z.string().min(1),
@@ -171,7 +171,7 @@ export const productRouter = createRouter({
       return { success: true };
     }),
 
-  delete: publicQuery
+  delete: adminProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input }) => {
       await deleteProduct(input.id);

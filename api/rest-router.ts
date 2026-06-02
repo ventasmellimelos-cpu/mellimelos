@@ -4,8 +4,16 @@ import {
   getVariantsByProductId, createVariants, deleteVariantsByProductId,
   getOrders, createOrder, updateOrderStatus,
 } from "./json-store";
+import { verifyToken, getBearer } from "./lib/auth";
 
 const restApi = new Hono();
+
+// Admin guard: applied only to write endpoints + customer-PII reads.
+// Catalog reads and checkout (POST /orders) stay public.
+const requireAdmin = async (c: any, next: () => Promise<void>) => {
+  if (!verifyToken(getBearer(c))) return c.json({ error: "Unauthorized" }, 401);
+  await next();
+};
 
 // PRODUCTS
 restApi.get("/products", async (c) => {
@@ -30,7 +38,7 @@ restApi.get("/products/:id", async (c) => {
   return c.json({ ...product, variants: await getVariantsByProductId(id) });
 });
 
-restApi.post("/products", async (c) => {
+restApi.post("/products", requireAdmin, async (c) => {
   try {
     const body = await c.req.json();
 
@@ -61,7 +69,7 @@ restApi.post("/products", async (c) => {
   }
 });
 
-restApi.put("/products/:id", async (c) => {
+restApi.put("/products/:id", requireAdmin, async (c) => {
   try {
     const id = parseInt(c.req.param("id"));
     const body = await c.req.json();
@@ -96,14 +104,14 @@ restApi.put("/products/:id", async (c) => {
   }
 });
 
-restApi.delete("/products/:id", async (c) => {
+restApi.delete("/products/:id", requireAdmin, async (c) => {
   const id = parseInt(c.req.param("id"));
   await deleteProduct(id);
   return c.json({ success: true });
 });
 
 // ORDERS
-restApi.get("/orders", async (c) => {
+restApi.get("/orders", requireAdmin, async (c) => {
   const items = await getOrders();
   return c.json({ items, total: items.length });
 });
@@ -126,7 +134,7 @@ restApi.post("/orders", async (c) => {
   }
 });
 
-restApi.patch("/orders/:id/status", async (c) => {
+restApi.patch("/orders/:id/status", requireAdmin, async (c) => {
   const id = parseInt(c.req.param("id"));
   const body = await c.req.json();
   await updateOrderStatus(id, body.status);
