@@ -2,45 +2,64 @@
 <html lang="es-AR">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
     <!-- Primary Meta Tags -->
-    <title>Melli Melos | Ropa de Bebé Premium | Envíos a Todo Argentina</title>
-    <meta name="title" content="Melli Melos | Ropa de Bebé Premium | Envíos a Todo Argentina" />
-    <meta name="description" content="Melli Melos - Tienda de ropa de bebé premium en Buenos Aires. Bodies, conjuntos, accesorios y sets de regalo. Envíos a todo el país. Mercado Líder Platinum. Desde recién nacidos hasta 24 meses." />
-    <meta name="keywords" content="ropa de bebé, ropa para bebés, bodies, conjuntos bebé, accesorios bebé, tienda bebé Argentina, Melli Melos, regalo bebé, ropa recién nacido" />
+    <title>Melli Melos | Ropa de Bebé Premium en Argentina | Envíos a Todo el País</title>
+    <meta name="title" content="Melli Melos | Ropa de Bebé Premium en Argentina | Envíos a Todo el País" />
+    <meta name="description" content="Melli Melos: ropa de bebé premium en Buenos Aires. Bodies, conjuntos, accesorios y sets de regalo de 0 a 24 meses. Materiales hipoalergénicos, Mercado Líder Platinum y envíos a toda Argentina." />
+    <meta name="keywords" content="ropa de bebé, ropa para bebés, bodies de bebé, conjuntos para bebé, accesorios para bebé, ropa recién nacido, regalos para bebé, tienda de bebé Argentina, ropa bebé Buenos Aires, Melli Melos" />
     <meta name="author" content="Melli Melos" />
-    <meta name="robots" content="index, follow" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
     <meta name="language" content="Spanish" />
     <meta name="geo.region" content="AR-B" />
-    <meta name="geo.placename" content="Buenos Aires" />
-    <meta name="geo.position" content="-34.7;-58.6" />
-    <meta name="ICBM" content="-34.7, -58.6" />
-    
+    <meta name="geo.placename" content="Carlos Spegazzini, Ezeiza, Buenos Aires" />
+    <meta name="geo.position" content="-34.79;-58.55" />
+    <meta name="ICBM" content="-34.79, -58.55" />
+
     <!-- Canonical URL -->
-    <link rel="canonical" href="https://mellimelos.ar" />
-    
+    <link rel="canonical" href="https://mellimelos-production.up.railway.app/" />
+
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://mellimelos.ar" />
-    <meta property="og:title" content="Melli Melos | Ropa de Bebé Premium" />
-    <meta property="og:description" content="La ropa más suave para tu bebé. Bodies, conjuntos, accesorios y sets de regalo. Envíos a todo Argentina." />
-    <meta property="og:image" content="https://mellimelos.ar/images/og-image.jpg" />
+    <meta property="og:url" content="https://mellimelos-production.up.railway.app/" />
+    <meta property="og:title" content="Melli Melos | Ropa de Bebé Premium en Argentina" />
+    <meta property="og:description" content="La ropa más suave para tu bebé. Bodies, conjuntos, accesorios y sets de regalo de 0 a 24 meses. Envíos a toda Argentina." />
+    <meta property="og:image" content="https://mellimelos-production.up.railway.app/images/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Melli Melos - Ropa de bebé premium" />
     <meta property="og:locale" content="es_AR" />
     <meta property="og:site_name" content="Melli Melos" />
-    
+
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://mellimelos.ar" />
-    <meta property="twitter:title" content="Melli Melos | Ropa de Bebé Premium" />
-    <meta property="twitter:description" content="La ropa más suave para tu bebé. Envíos a todo Argentina." />
-    <meta property="twitter:image" content="https://mellimelos.ar/images/og-image.jpg" />
-    
-    <!-- Preconnect -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
-    
+    <meta property="twitter:url" content="https://mellimelos-production.up.railway.app/" />
+    <meta property="twitter:title" content="Melli Melos | Ropa de Bebé Premium en Argentina" />
+    <meta property="twitter:description" content="La ropa más suave para tu bebé. Envíos a toda Argentina." />
+    <meta property="twitter:image" content="https://mellimelos-production.up.railway.app/images/og-image.jpg" />
+
+    <!-- Resource hints: connect to font origins early -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <!-- Preload LCP hero image so it paints fast -->
+    <link rel="preload" as="image" href="/images/hero-lifestyle.jpg" fetchpriority="high" />
+
+    <!-- Fonts: load non-render-blocking (print swap trick) with noscript fallback -->
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap"
+      onload="this.onload=null;this.rel='stylesheet'"
+    />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap"
+      />
+    </noscript>
+
     <!-- PWA -->
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#F8E1E4" />
@@ -48,38 +67,85 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Melli Melos" />
     <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
-    
-    <!-- Structured Data -->
+
+    <!-- ============================================================
+         STRUCTURED DATA (Schema.org JSON-LD)
+         Optimizado para Google Rich Results + motores generativos
+         (Google AI Overviews / AI Mode, ChatGPT, Perplexity, Gemini).
+         Los crawlers de IA leen JSON-LD aunque no ejecuten JavaScript.
+         ============================================================ -->
+
+    <!-- WebSite + SearchAction (habilita sitelinks search box) -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "Store",
+      "@type": "WebSite",
       "name": "Melli Melos",
-      "description": "Tienda de ropa de bebé premium. Bodies, conjuntos, accesorios y sets de regalo.",
-      "url": "https://mellimelos.ar",
+      "alternateName": "Melli Melos Ropa de Bebé",
+      "url": "https://mellimelos-production.up.railway.app/",
+      "inLanguage": "es-AR",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://mellimelos-production.up.railway.app/catalogo?buscar={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+
+    <!-- ClothingStore / LocalBusiness -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "ClothingStore",
+      "@id": "https://mellimelos-production.up.railway.app/#store",
+      "name": "Melli Melos",
+      "description": "Tienda de ropa de bebé premium de 0 a 24 meses. Bodies, conjuntos, accesorios y sets de regalo con materiales hipoalergénicos. Envíos a toda Argentina.",
+      "url": "https://mellimelos-production.up.railway.app/",
+      "image": "https://mellimelos-production.up.railway.app/images/og-image.jpg",
+      "logo": "https://mellimelos-production.up.railway.app/icons/icon-512x512.png",
       "telephone": "+5491134848466",
       "email": "ventasmellimelos@gmail.com",
+      "currenciesAccepted": "ARS",
+      "paymentAccepted": "Efectivo, Transferencia bancaria, Mercado Pago",
+      "priceRange": "$$",
       "address": {
         "@type": "PostalAddress",
         "streetAddress": "Constancio Vigil 150",
         "addressLocality": "Carlos Spegazzini, Partido de Ezeiza",
         "addressRegion": "Buenos Aires",
+        "postalCode": "1812",
         "addressCountry": "AR"
       },
       "geo": {
         "@type": "GeoCoordinates",
-        "latitude": -34.7,
-        "longitude": -58.6
+        "latitude": -34.79,
+        "longitude": -58.55
       },
-      "openingHoursSpecification": {
-        "@type": "OpeningHoursSpecification",
-        "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
-        "opens": "09:00",
-        "closes": "18:00"
+      "areaServed": {
+        "@type": "Country",
+        "name": "Argentina"
       },
-      "paymentAccepted": "Efectivo, Transferencia",
-      "priceRange": "$",
-      "areaServed": "AR",
+      "openingHoursSpecification": [
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+          "opens": "09:00",
+          "closes": "18:00"
+        }
+      ],
+      "hasOfferCatalog": {
+        "@type": "OfferCatalog",
+        "name": "Catálogo de ropa de bebé",
+        "itemListElement": [
+          { "@type": "OfferCatalog", "name": "Bodies", "url": "https://mellimelos-production.up.railway.app/catalogo?categoria=bodies" },
+          { "@type": "OfferCatalog", "name": "Conjuntos", "url": "https://mellimelos-production.up.railway.app/catalogo?categoria=conjuntos" },
+          { "@type": "OfferCatalog", "name": "Accesorios", "url": "https://mellimelos-production.up.railway.app/catalogo?categoria=accesorios" },
+          { "@type": "OfferCatalog", "name": "Sets de regalo", "url": "https://mellimelos-production.up.railway.app/catalogo?categoria=regalo" }
+        ]
+      },
       "sameAs": [
         "https://www.instagram.com/melli_melos/",
         "https://www.facebook.com/mellimelosropadebebes/",
@@ -87,15 +153,16 @@
       ]
     }
     </script>
-    
-    <!-- Organization Schema -->
+
+    <!-- Organization -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "Organization",
+      "@id": "https://mellimelos-production.up.railway.app/#organization",
       "name": "Melli Melos",
-      "url": "https://mellimelos.ar",
-      "logo": "https://mellimelos.ar/icons/icon-192x192.png",
+      "url": "https://mellimelos-production.up.railway.app/",
+      "logo": "https://mellimelos-production.up.railway.app/icons/icon-512x512.png",
       "contactPoint": {
         "@type": "ContactPoint",
         "telephone": "+5491134848466",
@@ -110,16 +177,98 @@
       ]
     }
     </script>
+
+    <!-- FAQPage: alimenta Google AI Overviews y respuestas de motores generativos -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "¿Hacen envíos a todo Argentina?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Sí. Melli Melos realiza envíos a todo el país. Coordinamos el envío por WhatsApp después de tu compra y te llega a la puerta de tu casa."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Qué talles de ropa de bebé tienen?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Tenemos ropa de bebé desde recién nacido hasta 24 meses, en talles 0-3m, 3-6m, 6-9m, 9-12m y más, según el producto."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Cómo comprar en Melli Melos?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Elegí las prendas del catálogo, agregalas al carrito y envianos tu pedido por WhatsApp. Te confirmamos stock, formas de pago y coordinamos el envío."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Qué formas de pago aceptan?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Aceptamos efectivo, transferencia bancaria y Mercado Pago."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿La ropa es de buena calidad para la piel del bebé?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Sí. Trabajamos con materiales suaves e hipoalergénicos, pensados para el confort y la piel delicada de los recién nacidos y bebés."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Tienen envío gratis?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Sí, ofrecemos envío gratis en compras superiores a $25.000."
+          }
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <noscript>
-      <div style="text-align:center;padding:40px;font-family:sans-serif;">
-        <h1>Melli Melos - Ropa de Bebé</h1>
-        <p>Para ver nuestra tienda, por favor habilitá JavaScript en tu navegador.</p>
-        <p>Contacto: +54 9 11 3484-8466 | ventasmellimelos@gmail.com</p>
-      </div>
+      <!-- Contenido semántico real para crawlers que no ejecutan JavaScript
+           (Googlebot sin render, GPTBot, PerplexityBot, etc.). -->
+      <main style="max-width:760px;margin:0 auto;padding:32px 20px;font-family:system-ui,sans-serif;line-height:1.6;color:#2D2D2D;">
+        <h1>Melli Melos — Ropa de Bebé Premium en Argentina</h1>
+        <p>
+          Melli Melos es una tienda familiar de ropa de bebé premium ubicada en Carlos Spegazzini,
+          Partido de Ezeiza, Buenos Aires. Vendemos bodies, conjuntos, accesorios y sets de regalo
+          de 0 a 24 meses, con materiales suaves e hipoalergénicos. Somos Mercado Líder Platinum y
+          hacemos envíos a toda Argentina.
+        </p>
+        <h2>Categorías</h2>
+        <ul>
+          <li>Bodies para bebé</li>
+          <li>Conjuntos para bebé</li>
+          <li>Accesorios (gorros, manoplas, mantas)</li>
+          <li>Sets de regalo para recién nacidos</li>
+        </ul>
+        <h2>Cómo comprar</h2>
+        <p>
+          Elegí las prendas, agregalas al carrito y envianos tu pedido por WhatsApp al
+          +54 9 11 3484-8466. Coordinamos el pago y el envío a todo el país.
+        </p>
+        <h2>Contacto</h2>
+        <p>
+          WhatsApp: +54 9 11 3484-8466 · Email: ventasmellimelos@gmail.com ·
+          Instagram: @melli_melos
+        </p>
+        <p>Para ver la tienda completa, por favor habilitá JavaScript en tu navegador.</p>
+      </main>
     </noscript>
   </body>
 </html>
