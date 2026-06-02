@@ -54,21 +54,54 @@ export default function Home() {
 
   const aboutFeatures = get("about_features").split(",").map((f) => f.trim()).filter(Boolean);
 
-  // Hero entrance
+  // Hero entrance (progressive enhancement)
   useEffect(() => {
-    const ctx = gsap.context(() => {
-      const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
-      tl.fromTo(".hero-badge", { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5 }, 0.2)
-        .fromTo(".hero-title", { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7 }, 0.3)
-        .fromTo(".hero-subtitle", { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6 }, 0.5)
-        .fromTo(".hero-cta", { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6 }, 0.7)
-        .fromTo(".hero-trust", { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5 }, 0.9);
-    }, heroRef);
-    return () => ctx.revert();
+    const targets = [".hero-badge", ".hero-title", ".hero-subtitle", ".hero-cta", ".hero-trust"];
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    // Si el usuario pide menos movimiento: mostrar todo visible, sin animar.
+    if (reduce) {
+      gsap.set(targets, { opacity: 1, y: 0, clearProps: "transform" });
+      return;
+    }
+
+    let ctx: ReturnType<typeof gsap.context> | undefined;
+    const animate = () => {
+      ctx = gsap.context(() => {
+        const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+        tl.fromTo(".hero-badge", { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5 }, 0.2)
+          .fromTo(".hero-title", { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7 }, 0.3)
+          .fromTo(".hero-subtitle", { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6 }, 0.5)
+          .fromTo(".hero-cta", { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6 }, 0.7)
+          .fromTo(".hero-trust", { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5 }, 0.9);
+      }, heroRef);
+    };
+
+    // Tabs en background pausan requestAnimationFrame, así que GSAP no avanza
+    // y el hero quedaría invisible. Lo mostramos ya y animamos al enfocar.
+    if (document.hidden) {
+      gsap.set(targets, { opacity: 1, y: 0 });
+      const onVisible = () => {
+        if (document.hidden) return;
+        document.removeEventListener("visibilitychange", onVisible);
+        gsap.set(targets, { clearProps: "all" });
+        animate();
+      };
+      document.addEventListener("visibilitychange", onVisible);
+      return () => document.removeEventListener("visibilitychange", onVisible);
+    }
+
+    animate();
+    return () => ctx?.revert();
   }, []);
 
   // Scroll reveals
   useEffect(() => {
+    // Respetar prefers-reduced-motion: dejar el contenido visible sin animaciones.
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      gsap.set([".reveal-up", ".reveal-item"], { opacity: 1, y: 0 });
+      return;
+    }
     const ctx = gsap.context(() => {
       gsap.utils.toArray<HTMLElement>(".reveal-up").forEach((el) => {
         gsap.fromTo(el, { y: 40, opacity: 0 }, {
