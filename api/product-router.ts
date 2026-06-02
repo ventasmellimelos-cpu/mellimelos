@@ -3,11 +3,7 @@ import { createRouter, publicQuery } from "./middleware";
 import {
   getProducts, getProductById, createProduct, updateProduct, deleteProduct,
   getVariantsByProductId, createVariants, deleteVariantsByProductId,
-  seedIfEmpty
 } from "./json-store";
-
-// Seed initial data
-seedIfEmpty();
 
 export const productRouter = createRouter({
   list: publicQuery
@@ -21,7 +17,7 @@ export const productRouter = createRouter({
       }).optional()
     )
     .query(async ({ input }) => {
-      let items = getProducts();
+      let items = await getProducts();
 
       if (input?.category) {
         items = items.filter((p) => p.category === input.category);
@@ -49,10 +45,9 @@ export const productRouter = createRouter({
       const offset = ((input?.page ?? 1) - 1) * (input?.limit ?? 12);
       const paginated = items.slice(offset, offset + (input?.limit ?? 12));
 
-      const itemsWithVariants = paginated.map((p) => ({
-        ...p,
-        variants: getVariantsByProductId(p.id),
-      }));
+      const itemsWithVariants = await Promise.all(
+        paginated.map(async (p) => ({ ...p, variants: await getVariantsByProductId(p.id) }))
+      );
 
       return {
         items: itemsWithVariants,
@@ -65,14 +60,17 @@ export const productRouter = createRouter({
   getById: publicQuery
     .input(z.object({ id: z.number() }))
     .query(async ({ input }) => {
-      const product = getProductById(input.id);
+      const product = await getProductById(input.id);
       if (!product) return null;
-      return { ...product, variants: getVariantsByProductId(input.id) };
+      return { ...product, variants: await getVariantsByProductId(input.id) };
     }),
 
   featured: publicQuery.query(async () => {
-    const items = getProducts().filter((p) => p.isFeatured);
-    return items.map((p) => ({ ...p, variants: getVariantsByProductId(p.id) }));
+    const all = await getProducts();
+    const items = all.filter((p) => p.isFeatured);
+    return await Promise.all(
+      items.map(async (p) => ({ ...p, variants: await getVariantsByProductId(p.id) }))
+    );
   }),
 
   create: publicQuery
@@ -98,7 +96,7 @@ export const productRouter = createRouter({
       })).optional(),
     }))
     .mutation(async ({ input }) => {
-      const product = createProduct({
+      const product = await createProduct({
         name: input.name,
         description: input.description,
         price: String(input.price),
@@ -115,7 +113,7 @@ export const productRouter = createRouter({
       });
 
       if (input.variants && input.variants.length > 0) {
-        createVariants(input.variants.map((v) => ({ ...v, productId: product.id })));
+        await createVariants(input.variants.map((v) => ({ ...v, productId: product.id })));
       }
 
       return { success: true, id: product.id };
@@ -147,7 +145,7 @@ export const productRouter = createRouter({
     .mutation(async ({ input }) => {
       const { id, variants, ...data } = input;
 
-      updateProduct(id, {
+      await updateProduct(id, {
         name: data.name,
         description: data.description,
         price: String(data.price),
@@ -164,9 +162,9 @@ export const productRouter = createRouter({
       });
 
       if (variants !== undefined) {
-        deleteVariantsByProductId(id);
+        await deleteVariantsByProductId(id);
         if (variants.length > 0) {
-          createVariants(variants.map((v) => ({ ...v, productId: id })));
+          await createVariants(variants.map((v) => ({ ...v, productId: id })));
         }
       }
 
@@ -176,7 +174,7 @@ export const productRouter = createRouter({
   delete: publicQuery
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input }) => {
-      deleteProduct(input.id);
+      await deleteProduct(input.id);
       return { success: true };
     }),
 });

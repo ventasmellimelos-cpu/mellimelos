@@ -12,7 +12,7 @@ export const uploadRouter = createRouter({
       })
     )
     .mutation(async ({ input }) => {
-      const upload = createUpload({
+      const upload = await createUpload({
         filename: input.filename,
         mimeType: input.mimeType,
         data: input.data,
@@ -29,7 +29,7 @@ export const uploadRouter = createRouter({
   getById: publicQuery
     .input(z.object({ id: z.number() }))
     .query(async ({ input }) => {
-      const upload = getUploadById(input.id);
+      const upload = await getUploadById(input.id);
       if (!upload) throw new Error("Upload not found");
       return upload;
     }),

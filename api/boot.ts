@@ -7,11 +7,18 @@ import { readFileSync, existsSync } from "fs";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { appRouter } from "./router";
 import { createContext } from "./context";
-import { getUploadById, seedIfEmpty } from "./json-store";
+import { ensureSchema, getUploadById, createUpload, seedIfEmpty } from "./json-store";
 import restApi from "./rest-router";
 
-// Auto-seed products on startup (safe, idempotent)
-try { seedIfEmpty(); } catch (e) { console.error("Seed error:", e); }
+// Initialize DB schema and seed on startup (idempotent, persistent in Postgres)
+(async () => {
+  try {
+    await ensureSchema();
+    await seedIfEmpty();
+  } catch (e) {
+    console.error("[db] init failed:", e);
+  }
+})();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -20,20 +27,19 @@ const indexPath = join(publicDir, "index.html");
 
 const app = new Hono();
 const port = parseInt(process.env.PORT || "3000");
-// Railway deploy timestamp: 2026-05-29-v6-seed-endpoint
 
 // Health check
 app.get("/api/trpc/ping", (c) => c.json({ ok: true, ts: Date.now() }));
 app.get("/api/ping", (c) => c.json({ ok: true, ts: Date.now() }));
 app.get("/health", (c) => c.json({ ok: true }));
 
-// Serve uploaded images directly from json-store
+// Serve uploaded images directly from db
 app.get("/uploads/:id", async (c) => {
   try {
     const id = parseInt(c.req.param("id"));
     if (isNaN(id)) return c.text("Invalid upload ID", 400);
 
-    const upload = getUploadById(id);
+    const upload = await getUploadById(id);
     if (!upload) return c.text("Image not found", 404);
 
     const buffer = Buffer.from(upload.data, "base64");
@@ -46,7 +52,7 @@ app.get("/uploads/:id", async (c) => {
   }
 });
 
-// Fast upload endpoint - accepts FormData directly (NO base64, much faster)
+// Fast upload endpoint - accepts FormData directly
 app.post("/api/upload", async (c) => {
   try {
     const formData = await c.req.formData();
@@ -54,25 +60,20 @@ app.post("/api/upload", async (c) => {
 
     if (!file) return c.json({ error: "No file provided" }, 400);
 
-    // Validate type
     const validTypes = ["image/png", "image/jpeg", "image/webp", "video/mp4", "video/webm", "video/quicktime"];
     if (!validTypes.includes(file.type)) {
       return c.json({ error: "Invalid file type. Use PNG, JPG, WEBP, MP4, WEBM, MOV" }, 400);
     }
 
-    // Validate size (images 5MB, videos 20MB)
     const maxSize = file.type.startsWith("video/") ? 20 * 1024 * 1024 : 5 * 1024 * 1024;
     if (file.size > maxSize) {
       return c.json({ error: `File too large. Max ${maxSize / 1024 / 1024}MB` }, 400);
     }
 
-    // Read file as bytes and convert to base64
     const arrayBuffer = await file.arrayBuffer();
     const base64 = Buffer.from(arrayBuffer).toString("base64");
 
-    // Store in json-store
-    const { createUpload } = await import("./json-store");
-    const upload = createUpload({
+    const upload = await createUpload({
       filename: file.name,
       mimeType: file.type,
       data: base64,
@@ -90,7 +91,7 @@ app.post("/api/upload", async (c) => {
   }
 });
 
-// Serve static files (JS, CSS, images, etc.)
+// Serve static files
 app.use("/assets/*", serveStatic({ root: publicDir }));
 app.use("/images/*", serveStatic({ root: publicDir }));
 app.use("/icons/*", serveStatic({ root: publicDir }));
@@ -99,15 +100,14 @@ app.use("/robots.txt", serveStatic({ root: publicDir }));
 app.use("/sitemap.xml", serveStatic({ root: publicDir }));
 app.use("/sw.js", serveStatic({ root: publicDir }));
 
-// REST API (simple, reliable - used by frontend)
+// REST API
 app.route("/api", restApi);
 
-// Seed endpoint - force re-seed
+// Seed endpoint - force re-seed (no-op if already populated)
 app.get("/api/seed", async (c) => {
   try {
-    const { seedIfEmpty } = await import("./json-store");
-    seedIfEmpty();
-    return c.json({ ok: true, message: "Products seeded successfully" });
+    await seedIfEmpty();
+    return c.json({ ok: true, message: "Seed checked" });
   } catch (e) {
     return c.json({ ok: false, error: e instanceof Error ? e.message : String(e) }, 500);
   }
@@ -115,7 +115,12 @@ app.get("/api/seed", async (c) => {
 
 // Migration endpoint
 app.get("/api/migrate", async (c) => {
-  return c.json({ ok: true, message: "Using json-store, no migration needed" });
+  try {
+    await ensureSchema();
+    return c.json({ ok: true, message: "Schema ensured" });
+  } catch (e) {
+    return c.json({ ok: false, error: e instanceof Error ? e.message : String(e) }, 500);
+  }
 });
 
 // tRPC API handler
@@ -130,7 +135,7 @@ app.all("/api/trpc/*", async (c) => {
   });
 });
 
-// SPA fallback: serve index.html for ALL other routes
+// SPA fallback
 app.get("/*", (c) => {
   try {
     if (existsSync(indexPath)) {
