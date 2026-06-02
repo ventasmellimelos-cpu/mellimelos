@@ -1,9 +1,9 @@
 import { z } from "zod";
-import { createRouter, publicQuery } from "./middleware";
+import { createRouter, publicQuery, adminProcedure } from "./middleware";
 import { getOrders, createOrder, updateOrderStatus } from "./json-store";
 
 export const orderRouter = createRouter({
-  list: publicQuery
+  list: adminProcedure
     .input(
       z.object({
         status: z.enum(["pending", "confirmed", "shipped", "delivered"]).optional(),
@@ -55,7 +55,7 @@ export const orderRouter = createRouter({
       return order;
     }),
 
-  updateStatus: publicQuery
+  updateStatus: adminProcedure
     .input(z.object({ id: z.number(), status: z.enum(["pending", "confirmed", "shipped", "delivered"]) }))
     .mutation(async ({ input }) => {
       await updateOrderStatus(input.id, input.status);

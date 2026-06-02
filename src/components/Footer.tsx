@@ -125,8 +125,16 @@ export default function Footer() {
           </div>
         </div>
 
+        {/* Legal links */}
+        <nav aria-label="Enlaces legales" className="mt-6 flex flex-wrap gap-x-6 gap-y-2">
+          <Link to="/terminos" className="font-body text-xs text-white/50 hover:text-[#F8E1E4] transition-colors">Términos y Condiciones</Link>
+          <Link to="/privacidad" className="font-body text-xs text-white/50 hover:text-[#F8E1E4] transition-colors">Política de Privacidad</Link>
+          <Link to="/cambios-y-devoluciones" className="font-body text-xs text-white/50 hover:text-[#F8E1E4] transition-colors">Cambios y Devoluciones</Link>
+          <Link to="/arrepentimiento" className="font-body text-xs text-white/50 hover:text-[#F8E1E4] transition-colors">Botón de Arrepentimiento</Link>
+        </nav>
+
         {/* Bottom bar */}
-        <div className="mt-8 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="mt-6 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="font-body text-xs text-white/30">
             © {new Date().getFullYear()} {get("store_name")}. Todos los derechos reservados.
           </p>
