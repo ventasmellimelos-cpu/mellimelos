@@ -29,6 +29,26 @@ const indexPath = join(publicDir, "index.html");
 const app = new Hono();
 const port = parseInt(process.env.PORT || "3000");
 
+// Canonical host. Redirect page views on the old *.railway.app domain to the
+// custom domain (301) so Google consolidates ranking on one URL and visitors
+// land on the branded domain. Only HTML page navigations are redirected —
+// health checks, API, assets and uploads are never touched, so Railway's
+// internal checks and same-origin asset loads keep working.
+const CANONICAL_HOST = "www.mellimelos.site";
+app.use("*", async (c, next) => {
+  const host = c.req.header("host") ?? "";
+  if (host.endsWith(".railway.app")) {
+    const accept = c.req.header("accept") ?? "";
+    const path = c.req.path;
+    const isHtmlNav = c.req.method === "GET" && accept.includes("text/html") && !path.startsWith("/api");
+    if (isHtmlNav) {
+      const url = new URL(c.req.url);
+      return c.redirect(`https://${CANONICAL_HOST}${url.pathname}${url.search}`, 301);
+    }
+  }
+  await next();
+});
+
 // Admin guard for write/PII endpoints (catalog reads stay public).
 const requireAdmin = async (c: any, next: () => Promise<void>) => {
   if (!verifyToken(getBearer(c))) return c.json({ error: "Unauthorized" }, 401);

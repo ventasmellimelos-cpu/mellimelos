@@ -6,7 +6,7 @@ Disallow: /admin
 Disallow: /admin/
 
 # Sitemap
-Sitemap: https://mellimelos-production.up.railway.app/sitemap.xml
+Sitemap: https://www.mellimelos.site/sitemap.xml
 
 # --- Buscadores tradicionales ---
 User-agent: Googlebot
