@@ -4,6 +4,14 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Search, SlidersHorizontal } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
+import { useSeo } from "@/hooks/useSeo";
+
+const categoryTitles: Record<string, string> = {
+  bodies: "Bodies para Bebé",
+  conjuntos: "Conjuntos para Bebé",
+  accesorios: "Accesorios para Bebé",
+  regalo: "Sets de Regalo para Bebé",
+};
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -38,6 +46,17 @@ export default function Catalogo() {
   const [products, setProducts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const gridRef = useRef<HTMLDivElement>(null);
+
+  const catLabel = category ? categoryTitles[category] : null;
+  useSeo({
+    title: catLabel
+      ? `${catLabel} | Melli Melos | Envíos a Todo Argentina`
+      : "Catálogo de Ropa de Bebé | Melli Melos | Envíos a Todo Argentina",
+    description: catLabel
+      ? `${catLabel} de 0 a 24 meses. Materiales hipoalergénicos y envíos a toda Argentina. Comprá en Melli Melos.`
+      : "Explorá el catálogo completo de ropa de bebé Melli Melos: bodies, conjuntos, accesorios y sets de regalo de 0 a 24 meses. Envíos a toda Argentina.",
+    path: category ? `/catalogo?categoria=${category}` : "/catalogo",
+  });
 
   // Load products via REST API
   useEffect(() => {
