@@ -6,12 +6,9 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/trpc/product.list")
+    fetch("/api/products")
       .then((r) => r.json())
-      .then((json) => {
-        const items = json?.result?.data?.json?.items ?? [];
-        setProducts(items);
-      })
+      .then((json) => setProducts(json.items ?? []))
       .catch(() => setProducts([]))
       .finally(() => setLoading(false));
   }, []);

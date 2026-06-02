@@ -3,7 +3,6 @@ import { useSearchParams } from "react-router";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Search, SlidersHorizontal } from "lucide-react";
-import { trpc } from "@/providers/trpc";
 import ProductCard from "@/components/ProductCard";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -36,15 +35,22 @@ export default function Catalogo() {
   const [sort, setSort] = useState<"newest" | "price_asc" | "price_desc" | "bestseller">("newest");
   const [page, setPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
+  const [products, setProducts] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const gridRef = useRef<HTMLDivElement>(null);
 
-  const { data, isLoading } = trpc.product.list.useQuery({
-    category: category as "bodies" | "conjuntos" | "accesorios" | "regalo" | undefined,
-    search: search || undefined,
-    sort,
-    page,
-    limit: 12,
-  });
+  // Load products via REST API
+  useEffect(() => {
+    setIsLoading(true);
+    const url = category
+      ? `/api/products?category=${encodeURIComponent(category)}`
+      : "/api/products";
+    fetch(url)
+      .then((r) => r.json())
+      .then((json) => setProducts(json.items ?? []))
+      .catch(() => setProducts([]))
+      .finally(() => setIsLoading(false));
+  }, [category]);
 
   // Update URL when category changes
   useEffect(() => {
@@ -59,7 +65,7 @@ export default function Catalogo() {
 
   // Animate products on load
   useEffect(() => {
-    if (gridRef.current && data?.items) {
+    if (gridRef.current && filteredProducts.length > 0) {
       const ctx = gsap.context(() => {
         gsap.fromTo(
           gridRef.current!.querySelectorAll(".catalog-product"),
@@ -75,7 +81,25 @@ export default function Catalogo() {
       });
       return () => ctx.revert();
     }
-  }, [data?.items]);
+  }, [products, sort, search]);
+
+  // Filter and sort products client-side
+  const filteredProducts = products
+    .filter((p) => {
+      if (!search) return true;
+      return p.name.toLowerCase().includes(search.toLowerCase());
+    })
+    .sort((a, b) => {
+      switch (sort) {
+        case "price_asc": return parseFloat(a.price) - parseFloat(b.price);
+        case "price_desc": return parseFloat(b.price) - parseFloat(a.price);
+        case "bestseller": return (b.isBestseller ? 1 : 0) - (a.isBestseller ? 1 : 0);
+        default: return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      }
+    });
+
+  const totalPages = Math.ceil(filteredProducts.length / 12);
+  const paginatedProducts = filteredProducts.slice((page - 1) * 12, page * 12);
 
   const handleCategoryChange = (cat: string) => {
     setCategory(cat || undefined);
@@ -99,7 +123,7 @@ export default function Catalogo() {
               Nuestro Catálogo
             </h1>
             <p className="font-body text-[#6B6B6B] mt-1">
-              {data?.total ?? 0} productos disponibles
+              {filteredProducts.length} productos disponibles
             </p>
           </div>
 
@@ -171,7 +195,7 @@ export default function Catalogo() {
               <div key={i} className="bg-white rounded-2xl h-[380px] animate-pulse" />
             ))}
           </div>
-        ) : data?.items.length === 0 ? (
+        ) : paginatedProducts.length === 0 ? (
           <div className="text-center py-20">
             <p className="font-display text-2xl text-[#2D2D2D] mb-2">
               No encontramos productos
@@ -183,7 +207,7 @@ export default function Catalogo() {
         ) : (
           <>
             <div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {data?.items.map((product) => (
+              {paginatedProducts.map((product) => (
                 <div key={product.id} className="catalog-product">
                   <ProductCard product={product} />
                 </div>
@@ -191,7 +215,7 @@ export default function Catalogo() {
             </div>
 
             {/* Pagination */}
-            {data && data.totalPages > 1 && (
+            {totalPages > 1 && (
               <div className="flex items-center justify-center gap-2 mt-10">
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
@@ -200,7 +224,7 @@ export default function Catalogo() {
                 >
                   Anterior
                 </button>
-                {Array.from({ length: data.totalPages }, (_, i) => i + 1).map((p) => (
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
                   <button
                     key={p}
                     onClick={() => setPage(p)}
@@ -214,8 +238,8 @@ export default function Catalogo() {
                   </button>
                 ))}
                 <button
-                  onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))}
-                  disabled={page === data.totalPages}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
                   className="px-4 py-2 rounded-full font-body text-sm border border-[#E0D5CC] disabled:opacity-40 hover:bg-[#F8E1E4] transition-colors"
                 >
                   Siguiente

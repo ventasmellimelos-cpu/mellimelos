@@ -8,6 +8,7 @@ import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { appRouter } from "./router";
 import { createContext } from "./context";
 import { getUploadById, seedIfEmpty } from "./json-store";
+import restApi from "./rest-router";
 
 // Auto-seed products on startup (safe, idempotent)
 try { seedIfEmpty(); } catch (e) { console.error("Seed error:", e); }
@@ -97,6 +98,9 @@ app.use("/manifest.json", serveStatic({ root: publicDir }));
 app.use("/robots.txt", serveStatic({ root: publicDir }));
 app.use("/sitemap.xml", serveStatic({ root: publicDir }));
 app.use("/sw.js", serveStatic({ root: publicDir }));
+
+// REST API (simple, reliable - used by frontend)
+app.route("/api", restApi);
 
 // Seed endpoint - force re-seed
 app.get("/api/seed", async (c) => {

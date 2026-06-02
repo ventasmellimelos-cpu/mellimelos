@@ -31,13 +31,12 @@ export default function AdminProducts() {
   const [newSize, setNewSize] = useState("");
   const [uploadingCount, setUploadingCount] = useState(0);
 
-  // Load products via fetch
+  // Load products via REST API
   const loadProducts = async () => {
     try {
-      const res = await fetch("/api/trpc/product.list");
+      const res = await fetch("/api/products");
       const json = await res.json();
-      const items = json?.result?.data?.json?.items ?? [];
-      setProducts(items);
+      setProducts(json.items ?? []);
     } catch (e) { console.error(e); }
     setLoading(false);
   };
@@ -168,17 +167,19 @@ export default function AdminProducts() {
 
     try {
       if (editingId) {
-        await fetch("/api/trpc/product.update", {
-          method: "POST",
+        await fetch(`/api/products/${editingId}`, {
+          method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: editingId, ...payload }),
+          body: JSON.stringify(payload),
         });
       } else {
-        await fetch("/api/trpc/product.create", {
+        const res = await fetch("/api/products", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
+        const data = await res.json();
+        console.log("Product created:", data);
       }
       setShowForm(false); setEditingId(null); resetForm(); loadProducts();
     } catch (err) { console.error(err); alert("Error al guardar el producto."); }
@@ -186,11 +187,7 @@ export default function AdminProducts() {
 
   const handleDelete = async (id: number) => {
     try {
-      await fetch("/api/trpc/product.delete", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
-      });
+      await fetch(`/api/products/${id}`, { method: "DELETE" });
       setDeleteId(null); loadProducts();
     } catch (err) { console.error(err); }
   };

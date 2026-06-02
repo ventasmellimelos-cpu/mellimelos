@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Package, Truck, CheckCircle, Clock, DollarSign, Trash2 } from "lucide-react";
+import { Package, Truck, CheckCircle, Clock } from "lucide-react";
 
 const statusLabels: Record<string, string> = {
   pending: "Pendiente",
@@ -23,10 +23,9 @@ export default function AdminOrders() {
 
   const loadOrders = async () => {
     try {
-      const res = await fetch("/api/trpc/order.list");
+      const res = await fetch("/api/orders");
       const json = await res.json();
-      const items = json?.result?.data?.json?.items ?? [];
-      setOrders(items);
+      setOrders(json.items ?? []);
     } catch (e) { console.error(e); }
     setLoading(false);
   };
@@ -42,10 +41,10 @@ export default function AdminOrders() {
   const updateStatus = async (id: number, status: string) => {
     setUpdatingId(id);
     try {
-      await fetch("/api/trpc/order.updateStatus", {
-        method: "POST",
+      await fetch(`/api/orders/${id}/status`, {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, status }),
+        body: JSON.stringify({ status }),
       });
       await loadOrders();
     } catch (e) { console.error(e); }
