@@ -10,7 +10,7 @@ export default function AdminProducts() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
-  const [imagePreviewIdx, setImagePreviewIdx] = useState(0);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -49,7 +49,7 @@ export default function AdminProducts() {
 
   const resetForm = () => {
     setForm({ name: "", description: "", price: "", salePrice: "", images: [], videoUrl: "", category: "bodies", colors: [], isFeatured: false, isNew: false, isBestseller: false, variants: [] });
-    setNewColor(""); setNewColorHex("#F8E1E4"); setNewSize(""); setImagePreviewIdx(0);
+    setNewColor(""); setNewColorHex("#F8E1E4"); setNewSize(""); setImagePreviewUrl(null);
   };
 
   const openEdit = (product: any) => {
@@ -66,6 +66,7 @@ export default function AdminProducts() {
       isBestseller: product.isBestseller ?? false,
       variants: (product.variants ?? []).map((v: any) => ({ color: v.color, colorHex: v.colorHex ?? "#E8E8E8", size: v.size, stock: v.stock ?? 0 })),
     });
+    setImagePreviewUrl(product.images?.[0] ?? product.imageUrl ?? null);
     setShowForm(true);
   };
 
@@ -95,7 +96,6 @@ export default function AdminProducts() {
     const validTypes = ["image/jpeg", "image/png", "image/webp"];
     setUploadingCount(filesToProcess.length);
     let done = 0;
-    const newUrls: string[] = [];
 
     for (const file of filesToProcess) {
       if (!validTypes.includes(file.type)) {
@@ -109,22 +109,16 @@ export default function AdminProducts() {
       try {
         const url = await uploadFile(file);
         if (url) {
-          newUrls.push(url);
-          setForm((prev) => ({ ...prev, images: [...prev.images, url] }));
+          // Update form images AND preview to show the just-uploaded image
+          setForm((prev) => {
+            const newImages = [...prev.images, url];
+            return { ...prev, images: newImages };
+          });
+          setImagePreviewUrl(url);
         }
       } catch (err) { console.error(`[Upload] Error for ${file.name}:`, err); }
       done++;
       setUploadingCount(filesToProcess.length - done);
-    }
-
-    // Show the first newly-uploaded image in the preview
-    if (newUrls.length > 0) {
-      setImagePreviewIdx(() => {
-        // If this is the first batch, show index 0
-        // Otherwise show the first of the new images
-        const totalImages = form.images.length + newUrls.length;
-        return totalImages <= newUrls.length ? 0 : form.images.length;
-      });
     }
 
     // CRITICAL: Reset the file input so the same file can be selected again
@@ -365,7 +359,7 @@ export default function AdminProducts() {
                     {form.images.length > 0 ? (
                       <div className="space-y-2">
                         <div className="relative w-full h-44 rounded-xl border border-[#E0D5CC] overflow-hidden bg-[#F5F0EB]">
-                          <img src={form.images[imagePreviewIdx]} alt="" className="w-full h-full object-contain" />
+                          <img src={imagePreviewUrl ?? form.images[0]} alt="" className="w-full h-full object-contain" />
                           {uploadingCount > 0 && (
                             <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                               <div className="flex items-center gap-2 text-white font-body text-sm">
@@ -376,15 +370,15 @@ export default function AdminProducts() {
                           )}
                           {form.images.length > 1 && (
                             <>
-                              <button type="button" onClick={() => setImagePreviewIdx((i) => Math.max(0, i - 1))} className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 bg-white/80 rounded-full hover:bg-white"><ChevronLeft size={16} /></button>
-                              <button type="button" onClick={() => setImagePreviewIdx((i) => Math.min(form.images.length - 1, i + 1))} className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-white/80 rounded-full hover:bg-white"><ChevronRight size={16} /></button>
+                              <button type="button" onClick={() => { const idx = form.images.indexOf(imagePreviewUrl ?? form.images[0]); setImagePreviewUrl(form.images[Math.max(0, idx - 1)]); }} className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 bg-white/80 rounded-full hover:bg-white"><ChevronLeft size={16} /></button>
+                              <button type="button" onClick={() => { const idx = form.images.indexOf(imagePreviewUrl ?? form.images[0]); setImagePreviewUrl(form.images[Math.min(form.images.length - 1, idx + 1)]); }} className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-white/80 rounded-full hover:bg-white"><ChevronRight size={16} /></button>
                             </>
                           )}
-                          <button type="button" onClick={() => setForm((p) => ({ ...p, images: p.images.filter((_, i) => i !== imagePreviewIdx) }))} className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600"><X size={12} /></button>
+                          <button type="button" onClick={() => { const remaining = form.images.filter((u) => u !== (imagePreviewUrl ?? form.images[0])); setForm((p) => ({ ...p, images: remaining })); setImagePreviewUrl(remaining[0] ?? null); }} className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600"><X size={12} /></button>
                         </div>
                         <div className="flex gap-2 flex-wrap">
                           {form.images.map((img, idx) => (
-                            <button key={idx} type="button" onClick={() => setImagePreviewIdx(idx)} className={`w-12 h-12 rounded-lg border-2 overflow-hidden ${idx === imagePreviewIdx ? "border-[#D4A5A5]" : "border-transparent"}`}><img src={img} alt="" className="w-full h-full object-cover" /></button>
+                            <button key={img + idx} type="button" onClick={() => setImagePreviewUrl(img)} className={`w-12 h-12 rounded-lg border-2 overflow-hidden ${img === (imagePreviewUrl ?? form.images[0]) ? "border-[#D4A5A5]" : "border-transparent"}`}><img src={img} alt="" className="w-full h-full object-cover" /></button>
                           ))}
                           {form.images.length < 10 && (
                             <button type="button" onClick={() => imageInputRef.current?.click()} className="w-12 h-12 rounded-lg border-2 border-dashed border-[#E0D5CC] flex items-center justify-center hover:border-[#D4A5A5] transition-colors"><Plus size={16} className="text-[#B0A8A0]" /></button>
