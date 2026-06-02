@@ -9,9 +9,14 @@ export default function AdminLogin() {
   const { login } = useAdminAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (login(password)) {
+    setLoading(true);
+    const ok = await login(password);
+    setLoading(false);
+    if (ok) {
       navigate("/admin");
     } else {
       setError(true);
@@ -65,9 +70,10 @@ export default function AdminLogin() {
 
             <button
               type="submit"
-              className="w-full bg-[#2D2D2D] text-white font-body font-medium py-3 rounded-xl hover:bg-[#F8E1E4] hover:text-[#2D2D2D] transition-all duration-300"
+              disabled={loading}
+              className="w-full bg-[#2D2D2D] text-white font-body font-medium py-3 rounded-xl hover:bg-[#F8E1E4] hover:text-[#2D2D2D] transition-all duration-300 disabled:opacity-60"
             >
-              Ingresar
+              {loading ? "Ingresando..." : "Ingresar"}
             </button>
           </form>
         </div>

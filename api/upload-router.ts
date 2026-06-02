@@ -1,9 +1,9 @@
 import { z } from "zod";
-import { createRouter, publicQuery } from "./middleware";
+import { createRouter, publicQuery, adminProcedure } from "./middleware";
 import { createUpload, getUploadById } from "./json-store";
 
 export const uploadRouter = createRouter({
-  create: publicQuery
+  create: adminProcedure
     .input(
       z.object({
         filename: z.string().min(1),

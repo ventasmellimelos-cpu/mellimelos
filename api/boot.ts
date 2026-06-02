@@ -8,6 +8,7 @@ import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { appRouter } from "./router";
 import { createContext } from "./context";
 import { ensureSchema, getUploadById, createUpload, seedIfEmpty } from "./json-store";
+import { checkPassword, issueToken, verifyToken, getBearer } from "./lib/auth";
 import restApi from "./rest-router";
 
 // Initialize DB schema and seed on startup (idempotent, persistent in Postgres)
@@ -28,10 +29,26 @@ const indexPath = join(publicDir, "index.html");
 const app = new Hono();
 const port = parseInt(process.env.PORT || "3000");
 
+// Admin guard for write/PII endpoints (catalog reads stay public).
+const requireAdmin = async (c: any, next: () => Promise<void>) => {
+  if (!verifyToken(getBearer(c))) return c.json({ error: "Unauthorized" }, 401);
+  await next();
+};
+
 // Health check
 app.get("/api/trpc/ping", (c) => c.json({ ok: true, ts: Date.now() }));
 app.get("/api/ping", (c) => c.json({ ok: true, ts: Date.now() }));
 app.get("/health", (c) => c.json({ ok: true }));
+
+// Admin login: validates the server-side password, returns a signed token.
+app.post("/api/admin/login", async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const password = String((body as { password?: unknown })?.password ?? "");
+  if (!checkPassword(password)) {
+    return c.json({ error: "Credenciales inválidas" }, 401);
+  }
+  return c.json({ token: issueToken() });
+});
 
 // Serve uploaded images directly from db
 app.get("/uploads/:id", async (c) => {
@@ -52,8 +69,8 @@ app.get("/uploads/:id", async (c) => {
   }
 });
 
-// Fast upload endpoint - accepts FormData directly
-app.post("/api/upload", async (c) => {
+// Fast upload endpoint - accepts FormData directly (admin only)
+app.post("/api/upload", requireAdmin, async (c) => {
   try {
     const formData = await c.req.formData();
     const file = formData.get("file") as File | null;
@@ -103,8 +120,8 @@ app.use("/sw.js", serveStatic({ root: publicDir }));
 // REST API
 app.route("/api", restApi);
 
-// Seed endpoint - force re-seed (no-op if already populated)
-app.get("/api/seed", async (c) => {
+// Seed endpoint - force re-seed (no-op if already populated) — admin only
+app.get("/api/seed", requireAdmin, async (c) => {
   try {
     await seedIfEmpty();
     return c.json({ ok: true, message: "Seed checked" });
@@ -113,8 +130,8 @@ app.get("/api/seed", async (c) => {
   }
 });
 
-// Migration endpoint
-app.get("/api/migrate", async (c) => {
+// Migration endpoint — admin only
+app.get("/api/migrate", requireAdmin, async (c) => {
   try {
     await ensureSchema();
     return c.json({ ok: true, message: "Schema ensured" });
