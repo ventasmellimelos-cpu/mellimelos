@@ -19,7 +19,7 @@ const indexPath = join(publicDir, "index.html");
 
 const app = new Hono();
 const port = parseInt(process.env.PORT || "3000");
-// Railway deploy timestamp: 2026-05-29-v5-trpc-batch
+// Railway deploy timestamp: 2026-05-29-v6-seed-endpoint
 
 // Health check
 app.get("/api/trpc/ping", (c) => c.json({ ok: true, ts: Date.now() }));
@@ -98,7 +98,18 @@ app.use("/robots.txt", serveStatic({ root: publicDir }));
 app.use("/sitemap.xml", serveStatic({ root: publicDir }));
 app.use("/sw.js", serveStatic({ root: publicDir }));
 
-// Migration endpoint - no-op with json-store
+// Seed endpoint - force re-seed
+app.get("/api/seed", async (c) => {
+  try {
+    const { seedIfEmpty } = await import("./json-store");
+    seedIfEmpty();
+    return c.json({ ok: true, message: "Products seeded successfully" });
+  } catch (e) {
+    return c.json({ ok: false, error: e instanceof Error ? e.message : String(e) }, 500);
+  }
+});
+
+// Migration endpoint
 app.get("/api/migrate", async (c) => {
   return c.json({ ok: true, message: "Using json-store, no migration needed" });
 });
