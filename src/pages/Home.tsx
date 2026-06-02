@@ -7,6 +7,8 @@ import {
   Star, ArrowRight, Shield, Clock, Gift, ShoppingBag, Mail
 } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
+import Reviews from "@/components/Reviews";
+import Faq from "@/components/Faq";
 import { useSettings } from "@/context/SettingsContext";
 import { useSeo } from "@/hooks/useSeo";
 
@@ -268,6 +270,9 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ============ REVIEWS ============ */}
+      <Reviews />
+
       {/* ============ ABOUT ============ */}
       <section id="nosotros" className="py-20 px-6 bg-[#FFF8F0]">
         <div className="mx-auto" style={{ maxWidth: 1280 }}>
@@ -342,6 +347,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* ============ FAQ ============ */}
+      <Faq />
 
       {/* ============ CONTACT ============ */}
       <section id="contacto" className="py-20 px-6 bg-[#FFF8F0]">

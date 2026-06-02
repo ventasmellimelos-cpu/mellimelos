@@ -1,6 +1,8 @@
 import { Link } from "react-router";
-import { MapPin, Phone, Mail, Instagram, Facebook, Heart, ArrowUpRight } from "lucide-react";
+import { MapPin, Phone, Mail, Instagram, Facebook, Heart, ArrowUpRight, Truck, ShieldCheck } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
+
+const paymentMethods = ["Mercado Pago", "Efectivo", "Transferencia"];
 
 const footerLinks = [
   { to: "/", label: "Inicio" },
@@ -103,8 +105,28 @@ export default function Footer() {
           </div>
         </div>
 
+        {/* Payment methods + shipping trust */}
+        <div className="mt-12 pt-8 border-t border-white/10 flex flex-col md:flex-row md:items-center md:justify-between gap-5">
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="font-body text-[11px] text-white/40 uppercase tracking-wider">Medios de pago</span>
+            {paymentMethods.map((m) => (
+              <span key={m} className="font-body text-xs text-white/75 bg-white/[0.06] border border-white/10 rounded-lg px-3 py-1.5">
+                {m}
+              </span>
+            ))}
+          </div>
+          <div className="flex items-center gap-5">
+            <span className="flex items-center gap-2 font-body text-xs text-white/55">
+              <Truck size={15} className="text-[#F8E1E4]" /> Envíos a todo el país
+            </span>
+            <span className="flex items-center gap-2 font-body text-xs text-white/55">
+              <ShieldCheck size={15} className="text-[#F8E1E4]" /> Compra protegida
+            </span>
+          </div>
+        </div>
+
         {/* Bottom bar */}
-        <div className="mt-12 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="mt-8 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="font-body text-xs text-white/30">
             © {new Date().getFullYear()} {get("store_name")}. Todos los derechos reservados.
           </p>
