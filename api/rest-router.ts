@@ -143,32 +143,4 @@ restApi.patch("/orders/:id/status", async (c) => {
   return c.json({ success: true });
 });
 
-// UPLOAD (additional endpoint for direct use)
-restApi.post("/upload", async (c) => {
-  try {
-    const formData = await c.req.formData();
-    const file = formData.get("file") as File | null;
-    if (!file) return c.json({ error: "No file provided" }, 400);
-
-    const validTypes = ["image/png", "image/jpeg", "image/webp", "video/mp4", "video/webm", "video/quicktime"];
-    if (!validTypes.includes(file.type)) return c.json({ error: "Invalid file type" }, 400);
-
-    const maxSize = file.type.startsWith("video/") ? 20 * 1024 * 1024 : 5 * 1024 * 1024;
-    if (file.size > maxSize) return c.json({ error: "File too large" }, 400);
-
-    const arrayBuffer = await file.arrayBuffer();
-    const base64 = Buffer.from(arrayBuffer).toString("base64");
-
-    const upload = createUpload({
-      filename: file.name,
-      mimeType: file.type,
-      data: base64,
-    });
-
-    return c.json({ id: upload.id, url: `/uploads/${upload.id}`, filename: upload.filename, mimeType: upload.mimeType });
-  } catch (e) {
-    return c.json({ error: e instanceof Error ? e.message : "Upload failed" }, 500);
-  }
-});
-
 export default restApi;

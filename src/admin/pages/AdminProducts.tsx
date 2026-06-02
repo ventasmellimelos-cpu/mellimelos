@@ -72,46 +72,78 @@ export default function AdminProducts() {
   const uploadFile = async (file: File): Promise<string | null> => {
     const data = new FormData();
     data.append("file", file);
+    console.log(`[Upload] Sending file: ${file.name}, type: ${file.type}, size: ${file.size}`);
     const res = await fetch("/api/upload", { method: "POST", body: data });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error(`[Upload] Server error ${res.status}:`, errText);
+      return null;
+    }
     const json = await res.json();
+    console.log(`[Upload] Success:`, json);
     return json.url ?? null;
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (!files) return;
+    if (!files || files.length === 0) return;
+
     const remainingSlots = 10 - form.images.length;
     const filesToProcess = Array.from(files).slice(0, remainingSlots);
-    if (filesToProcess.length === 0) { alert("Máximo 10 imágenes."); return; }
+    if (filesToProcess.length === 0) { alert("Máximo 10 imágenes."); e.target.value = ""; return; }
 
     const validTypes = ["image/jpeg", "image/png", "image/webp"];
     setUploadingCount(filesToProcess.length);
     let done = 0;
+    const newUrls: string[] = [];
 
     for (const file of filesToProcess) {
-      if (!validTypes.includes(file.type) || file.size > 5 * 1024 * 1024) { done++; setUploadingCount(filesToProcess.length - done); continue; }
+      if (!validTypes.includes(file.type)) {
+        console.warn(`[Upload] Invalid type: ${file.name} -> ${file.type}`);
+        done++; setUploadingCount(filesToProcess.length - done); continue;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        console.warn(`[Upload] Too large: ${file.name} -> ${(file.size / 1024 / 1024).toFixed(1)}MB`);
+        done++; setUploadingCount(filesToProcess.length - done); continue;
+      }
       try {
         const url = await uploadFile(file);
-        if (url) setForm((prev) => ({ ...prev, images: [...prev.images, url] }));
-      } catch (err) { console.error(err); }
+        if (url) {
+          newUrls.push(url);
+          setForm((prev) => ({ ...prev, images: [...prev.images, url] }));
+        }
+      } catch (err) { console.error(`[Upload] Error for ${file.name}:`, err); }
       done++;
       setUploadingCount(filesToProcess.length - done);
     }
+
+    // Show the first newly-uploaded image in the preview
+    if (newUrls.length > 0) {
+      setImagePreviewIdx(() => {
+        // If this is the first batch, show index 0
+        // Otherwise show the first of the new images
+        const totalImages = form.images.length + newUrls.length;
+        return totalImages <= newUrls.length ? 0 : form.images.length;
+      });
+    }
+
+    // CRITICAL: Reset the file input so the same file can be selected again
+    e.target.value = "";
   };
 
   const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) { e.target.value = ""; return; }
     const validTypes = ["video/mp4", "video/webm", "video/quicktime"];
-    if (!validTypes.includes(file.type)) { alert("Solo MP4, WEBM o MOV."); return; }
-    if (file.size > 20 * 1024 * 1024) { alert("El video no debe superar 20MB."); return; }
+    if (!validTypes.includes(file.type)) { alert("Solo MP4, WEBM o MOV."); e.target.value = ""; return; }
+    if (file.size > 20 * 1024 * 1024) { alert("El video no debe superar 20MB."); e.target.value = ""; return; }
     setUploadingCount(1);
     try {
       const url = await uploadFile(file);
       if (url) setForm((prev) => ({ ...prev, videoUrl: url }));
     } catch (err) { console.error(err); alert("Error al subir el video."); }
     setUploadingCount(0);
+    e.target.value = "";
   };
 
   const addColor = () => {
