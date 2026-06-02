@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 import { useSettings } from "@/context/SettingsContext";
+import { useSeo } from "@/hooks/useSeo";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -37,6 +38,12 @@ export default function Home() {
   const heroRef = useRef<HTMLDivElement>(null);
   const [activeCategory, setActiveCategory] = useState<number | null>(null);
   const { get } = useSettings();
+
+  useSeo({
+    title: "Melli Melos | Ropa de Bebé Premium en Argentina | Envíos a Todo el País",
+    description: "Melli Melos: ropa de bebé premium en Buenos Aires. Bodies, conjuntos, accesorios y sets de regalo de 0 a 24 meses. Materiales hipoalergénicos y envíos a toda Argentina.",
+    path: "/",
+  });
 
   const trustBadges = [
     { icon: Shield, title: get("trust_badge_1_title"), desc: get("trust_badge_1_desc") },
@@ -87,7 +94,7 @@ export default function Home() {
       {/* ============ HERO ============ */}
       <section ref={heroRef} className="relative min-h-[100dvh] flex items-center overflow-hidden">
         <div className="absolute inset-0">
-          <img src="/images/hero-lifestyle.jpg" alt="" className="w-full h-full object-cover" />
+          <img src="/images/hero-lifestyle.jpg" alt="Bebé con ropa premium de Melli Melos" className="w-full h-full object-cover" fetchPriority="high" width={1920} height={1080} />
           <div className="absolute inset-0 bg-gradient-to-r from-[#FFF8F0]/95 via-[#FFF8F0]/70 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#FFF8F0] via-transparent to-[#FFF8F0]/30" />
         </div>
@@ -188,7 +195,7 @@ export default function Home() {
                 onMouseEnter={() => setActiveCategory(i)}
                 onMouseLeave={() => setActiveCategory(null)}
               >
-                <img src={cat.image} alt={cat.name} className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${activeCategory === i ? 'scale-110' : 'scale-100'}`} />
+                <img src={cat.image} alt={`Ropa de bebé: ${cat.name}`} loading="lazy" decoding="async" className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${activeCategory === i ? 'scale-110' : 'scale-100'}`} />
                 <div className={`absolute inset-0 transition-opacity duration-500 ${activeCategory === i ? 'bg-black/40' : 'bg-black/20'}`} />
                 <div className="absolute inset-0 flex flex-col items-center justify-center z-10 text-center p-6">
                   <h3 className="font-display text-3xl font-bold text-white mb-2 drop-shadow-lg">{cat.name}</h3>
@@ -234,7 +241,7 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div className="reveal-up relative">
               <div className="relative rounded-3xl overflow-hidden shadow-2xl shadow-[#D4A5A5]/10">
-                <img src="/images/categories/bodies.jpg" alt="Ropa de bebé Melli Melos" className="w-full h-full object-cover" />
+                <img src="/images/categories/bodies.jpg" alt="Ropa de bebé Melli Melos" loading="lazy" decoding="async" className="w-full h-full object-cover" />
               </div>
               <div className="absolute -bottom-6 -right-6 bg-white rounded-2xl p-5 shadow-xl">
                 <p className="font-display text-3xl font-bold text-[#D4A5A5]">+3</p>
@@ -343,7 +350,7 @@ export default function Home() {
 
             <div className="reveal-up hidden lg:block">
               <div className="relative rounded-3xl overflow-hidden shadow-2xl shadow-[#D4A5A5]/10">
-                <img src="/images/categories/conjuntos.jpg" alt="Contacto" className="w-full h-full object-cover" />
+                <img src="/images/categories/conjuntos.jpg" alt="Conjuntos de ropa para bebé Melli Melos" loading="lazy" decoding="async" className="w-full h-full object-cover" />
               </div>
             </div>
           </div>

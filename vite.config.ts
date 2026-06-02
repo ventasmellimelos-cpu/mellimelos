@@ -25,5 +25,16 @@ export default defineConfig({
   build: {
     outDir: path.resolve(__dirname, "dist/public"),
     emptyOutDir: true,
+    // Split big dependencies into cacheable vendor chunks so the initial
+    // payload is small and repeat visits hit the browser cache.
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "react-vendor": ["react", "react-dom", "react-router"],
+          "gsap-vendor": ["gsap", "@gsap/react"],
+          "query-vendor": ["@tanstack/react-query", "@trpc/client", "@trpc/react-query", "superjson"],
+        },
+      },
+    },
   },
 });
