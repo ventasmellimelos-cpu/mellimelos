@@ -137,6 +137,13 @@ app.use("/robots.txt", serveStatic({ root: publicDir }));
 app.use("/sitemap.xml", serveStatic({ root: publicDir }));
 app.use("/sw.js", serveStatic({ root: publicDir }));
 
+// Google Search Console verification (HTML file method). The SPA fallback would
+// otherwise serve index.html for this path; we return the exact content Google
+// expects so the file-based verification passes.
+app.get("/googlef1998b4e5cab36b9.html", (c) =>
+  c.text("google-site-verification: googlef1998b4e5cab36b9.html")
+);
+
 // REST API
 app.route("/api", restApi);
 
