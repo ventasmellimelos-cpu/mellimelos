@@ -154,8 +154,33 @@ export default function Footer() {
           <Link to="/arrepentimiento" className="font-body text-xs text-white/50 hover:text-[#F8E1E4] transition-colors">Botón de Arrepentimiento</Link>
         </nav>
 
+        {/* Otros proyectos */}
+        <div className="mt-6 pt-5 border-t border-white/10">
+          <p className="font-body text-[11px] text-white/30 uppercase tracking-wider mb-3">Otros proyectos</p>
+          <div className="flex flex-wrap gap-x-5 gap-y-2">
+            {[
+              { href: "https://www.marda.site", label: "Marda" },
+              { href: "https://www.trabajocerca.site", label: "TrabajoCerca" },
+              { href: "https://www.madsjeez.com.ar", label: "Madsjeez" },
+              { href: "https://www.madsjeezdesign.com", label: "Madsjeez Design" },
+              { href: "https://www.appjeezpro.com", label: "AppJeez Pro" },
+              { href: "https://www.appjeezpro.store", label: "AppJeez Store" },
+            ].map((p) => (
+              <a
+                key={p.href}
+                href={p.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-body text-xs text-white/30 hover:text-[#F8E1E4] transition-colors"
+              >
+                {p.label}
+              </a>
+            ))}
+          </div>
+        </div>
+
         {/* Bottom bar */}
-        <div className="mt-6 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="mt-5 pt-5 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="font-body text-xs text-white/30">
             © {new Date().getFullYear()} {get("store_name")}. Todos los derechos reservados.
           </p>
