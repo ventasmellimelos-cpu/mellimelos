@@ -6,6 +6,7 @@ import { AdminAuthProvider, useAdminAuth } from "./admin/context/AdminAuth";
 import Navbar from "./components/Navbar";
 import CartDrawer from "./components/CartDrawer";
 import Footer from "./components/Footer";
+import WhatsAppFloat from "./components/WhatsAppFloat";
 import Home from "./pages/Home";
 
 // Code-split: público (Catalogo) y todo el panel admin se cargan on-demand,
@@ -42,6 +43,7 @@ function PublicLayout({ children }: { children: React.ReactNode }) {
       <Navbar />
       <CartDrawer />
       {children}
+      <WhatsAppFloat />
     </>
   );
 }
