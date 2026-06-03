@@ -11,6 +11,13 @@ const footerLinks = [
   { to: "/#contacto", label: "Contacto" },
 ];
 
+const footerCategories = [
+  { to: "/catalogo?categoria=bodies", label: "Bodies" },
+  { to: "/catalogo?categoria=conjuntos", label: "Conjuntos" },
+  { to: "/catalogo?categoria=accesorios", label: "Accesorios" },
+  { to: "/catalogo?categoria=regalo", label: "Sets de regalo" },
+];
+
 export default function Footer() {
   const { get } = useSettings();
   const whatsappUrl = `https://wa.me/${get("whatsapp")}`;
@@ -36,7 +43,7 @@ export default function Footer() {
 
       {/* Main Footer */}
       <div className="mx-auto px-6 py-14" style={{ maxWidth: 1280 }}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-10">
           {/* Brand */}
           <div>
             <Link to="/" className="flex items-center gap-2 mb-4">
@@ -56,6 +63,20 @@ export default function Footer() {
                 <li key={link.to}>
                   <Link to={link.to} className="font-body text-sm text-white/50 hover:text-[#F8E1E4] transition-colors">
                     {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Categories */}
+          <div>
+            <h4 className="font-display font-semibold text-lg mb-5">Categorías</h4>
+            <ul className="space-y-3">
+              {footerCategories.map((cat) => (
+                <li key={cat.to}>
+                  <Link to={cat.to} className="font-body text-sm text-white/50 hover:text-[#F8E1E4] transition-colors">
+                    {cat.label}
                   </Link>
                 </li>
               ))}
